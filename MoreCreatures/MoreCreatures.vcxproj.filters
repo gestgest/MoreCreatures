@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="헤더 파일\GameObject">
+      <UniqueIdentifier>{77fecb6e-3e4f-4749-95e4-b4568efd8a15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\vs">
+      <UniqueIdentifier>{a9cbcf0d-ece6-46d6-b51c-f2fc02d94334}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\fs">
+      <UniqueIdentifier>{28e7833b-a08d-4b02-84e2-f1ab3aa20c8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -21,5 +30,24 @@
     <ClCompile Include="src\main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\header\camera.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\header\shader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\GameObject\Ground.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\GameObject\GameObject.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\vs\ground.vs">
+      <Filter>소스 파일\vs</Filter>
+    </None>
   </ItemGroup>
 </Project>
