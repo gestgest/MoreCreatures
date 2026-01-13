@@ -30,3 +30,16 @@
 *.exe
 *.out
 *.app
+
+## Build 결과물
+MoreCreatures/MoreCreatures/x64/Debug/
+MoreCreatures/x64/Debug/
+[Bb]in/
+[Obj]/
+
+## Visual Studio 개인 설정 및 캐시
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.tlog
