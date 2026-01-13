@@ -43,3 +43,5 @@ MoreCreatures/x64/Debug/
 *.userosscache
 *.sln.docstates
 *.tlog
+*.vcxproj
+*.filiters
