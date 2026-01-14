@@ -35,13 +35,14 @@ public:
     ///00 00 01 00
     ///-x -y -z 01
 
+    bool isThirdView;
 
     glm::vec3 Front;
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
     
-    glm::vec3 trackingPos;
+    glm::vec3 trackingPos; //
     // euler Angles
     float Yaw; //좌우
     float Pitch; //높이
@@ -54,6 +55,7 @@ public:
     //: 이후는 초기화다
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM), trackingPos(glm::vec3(10.0f, 10.0f, 10.0f))
     {
+        isThirdView = true;
         Position = position;
         WorldUp = up;
         Yaw = yaw;
@@ -80,8 +82,10 @@ public:
         return glm::lookAt(Position, Position + Front, Up);
     }
 
+    //3인칭
     void move(glm::vec3 player_pos)
     {
+        
         //float velocity = MovementSpeed * deltaTime;
         updateCameraPosition(player_pos);
         //Front *= -1;
@@ -124,7 +128,7 @@ public:
     {
         Front = glm::normalize(front);
 
-        Right = glm::normalize(glm::cross(Front, WorldUp)); 
+        Right = glm::normalize(glm::cross(Front, WorldUp));
         Up = glm::normalize(glm::cross(Right, Front));
     }
     glm::vec3 getTrackingPos()
@@ -148,10 +152,20 @@ private:
         trackingPos.y = Zoom * -sin(glm::radians(Pitch));
         trackingPos.z = Zoom * sin(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
 
-        Position = player_pos + trackingPos;
+        if (isThirdView)
+        {
+            Position = player_pos + trackingPos;
 
-        glm::vec3 frontCameraVector = player_pos - Position;
-        updateCameraVectors(frontCameraVector);
+            glm::vec3 frontCameraVector = player_pos - Position;
+            updateCameraVectors(frontCameraVector);
+        }
+        else
+        {
+            updateCameraVectors(trackingPos);
+            //Position = player_pos + Front;
+            Position = player_pos;
+            std::cout << Position.x << '\n';
+        }
     }
 
     void debugVec3(glm::vec3 pos)
