@@ -85,7 +85,6 @@ public:
     //3인칭
     void move(glm::vec3 player_pos)
     {
-        
         //float velocity = MovementSpeed * deltaTime;
         updateCameraPosition(player_pos);
         //Front *= -1;
@@ -137,7 +136,7 @@ public:
     }
     glm::vec3 getFrontPlayer()
     {
-        return glm::vec3(Front.x,0, Front.z);
+        return glm::vec3(Front.x, 0, Front.z);
     }
     glm::vec3  getRightPlayer()
     {
@@ -148,23 +147,27 @@ private:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraPosition(glm::vec3 player_pos)
     {
-        trackingPos.x = Zoom * cos(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
-        trackingPos.y = Zoom * -sin(glm::radians(Pitch));
-        trackingPos.z = Zoom * sin(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
+        trackingPos.x = cos(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
+        trackingPos.y = -sin(glm::radians(Pitch));
+        trackingPos.z = sin(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
 
         if (isThirdView)
         {
+            trackingPos *= Zoom;
+
+            //trackingPos는 Back;
             Position = player_pos + trackingPos;
 
+            //카메라가 플레이어를 쳐다보는
             glm::vec3 frontCameraVector = player_pos - Position;
             updateCameraVectors(frontCameraVector);
         }
         else
         {
-            updateCameraVectors(trackingPos);
+            updateCameraVectors(-trackingPos);
+            float m = 5;
             //Position = player_pos + Front;
-            Position = player_pos;
-            std::cout << Position.x << '\n';
+            Position = player_pos + glm::vec3(Front.x * m, Front.y * m + 5.0, Front.z * m);
         }
     }
 
