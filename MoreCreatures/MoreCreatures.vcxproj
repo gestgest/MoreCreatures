@@ -134,11 +134,17 @@
   <ItemGroup>
     <ClInclude Include="..\include\header\camera.h" />
     <ClInclude Include="..\include\header\shader.h" />
+    <ClInclude Include="src\header\GameObject\Creature.h" />
     <ClInclude Include="src\header\GameObject\GameObject.h" />
     <ClInclude Include="src\header\GameObject\Ground.h" />
+    <ClInclude Include="src\header\GameObject\Mouse.h" />
+    <ClInclude Include="src\header\GameObject\Player.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\fs\ground.fs" />
+    <None Include="src\fs\mouse.fs" />
     <None Include="src\vs\ground.vs" />
+    <None Include="src\vs\mouse.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

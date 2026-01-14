@@ -229,7 +229,6 @@ public:
         float velocity = movement_speed * deltaTime;
 
         move(vec, velocity);
-
     }
 
     unsigned int& getVAO()

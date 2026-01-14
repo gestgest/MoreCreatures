@@ -22,6 +22,9 @@
     <Filter Include="소스 파일\fs">
       <UniqueIdentifier>{28e7833b-a08d-4b02-84e2-f1ab3aa20c8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\cpp">
+      <UniqueIdentifier>{be303869-bed2-4b40-85c2-fb12abad9cbd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -44,9 +47,27 @@
     <ClInclude Include="src\header\GameObject\GameObject.h">
       <Filter>헤더 파일\GameObject</Filter>
     </ClInclude>
+    <ClInclude Include="src\header\GameObject\Creature.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\GameObject\Player.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\GameObject\Mouse.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vs\ground.vs">
+      <Filter>소스 파일\vs</Filter>
+    </None>
+    <None Include="src\fs\mouse.fs">
+      <Filter>소스 파일\fs</Filter>
+    </None>
+    <None Include="src\fs\ground.fs">
+      <Filter>소스 파일\fs</Filter>
+    </None>
+    <None Include="src\vs\mouse.vs">
       <Filter>소스 파일\vs</Filter>
     </None>
   </ItemGroup>

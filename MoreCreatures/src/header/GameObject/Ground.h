@@ -1,7 +1,7 @@
 #ifndef GROUND
 #define GROUND
 
-#include <../MoreCreatures/src/header/GameObject/GameObject.h>
+#include <GameObject/GameObject.h>
 
 class Ground : public GameObject {
 

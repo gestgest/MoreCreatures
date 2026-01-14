@@ -5,6 +5,7 @@
 #include <header/shader.h>
 
 #include <GameObject/Ground.h>
+#include <GameObject/Mouse.h>
 
 #include <iostream>
 
@@ -27,6 +28,7 @@ glm::vec3 lightColor(1.0, 1.0, 1.0);
 
 glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::vec3(0,1.0f,0.0f), glm::vec3(0,-1.0f,0.0f), glm::vec3(-1.0f,0.0f,-1.0f), glm::vec3(1.0f,0,1.0f) };
 
+Mouse* player;
 
 //mouse
 float lastX = SCR_WIDTH / 2.0f;
@@ -71,11 +73,17 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+    Shader mouseShader("src/vs/mouse.vs", "src/fs/mouse.fs");
     Shader groundShader("src/vs/ground.vs", "src/fs/ground.fs");
+
+
     Ground* ground = new Ground(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
+    Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5f, 0.5f, 0.5f));
+
     unsigned int ground_texture;
 
-    loadTexture(ground_texture, "../MoreCreatures/textures/snow.png");
+    player = mouse;
+    loadTexture(ground_texture, "textures/snow.png");
     ground->setTexture(ground_texture);
 
     // render loop
@@ -89,12 +97,14 @@ int main()
 
         // input
         processInput(window);
+        camera.move(player->getPosition());
 
         // render
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //sky
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //glEnable(GL_DEPTH_TEST);를 추가하면 GL_DEPTH_BUFFER_BIT도 넣어라
 
         ground->drawGameObject(camera, lightColor, lightPos);
+        mouse->drawGameObject(camera, lightColor, lightPos);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -103,6 +113,7 @@ int main()
     }
 
     delete ground;
+    delete mouse;
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
@@ -118,23 +129,27 @@ void processInput(GLFWwindow* window)
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        //player->playerMove(camera.getFrontPlayer(), deltaTime);
-        //camera.move(player->getPosition());
+        player->playerMove(camera.getFrontPlayer(), deltaTime);
+        camera.move(player->getPosition());
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        //player->playerMove(-camera.getFrontPlayer(), deltaTime);
-        //camera.move(player->getPosition());
+        player->playerMove(-camera.getFrontPlayer(), deltaTime);
+        camera.move(player->getPosition());
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        //player->playerMove(-camera.getRightPlayer(), deltaTime);
-        //camera.move(player->getPosition());
+        player->playerMove(-camera.getRightPlayer(), deltaTime);
+        camera.move(player->getPosition());
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        //player->playerMove(camera.getRightPlayer(), deltaTime);
-        //camera.move(player->getPosition());
+        player->playerMove(camera.getRightPlayer(), deltaTime);
+        camera.move(player->getPosition());
+    }
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+    {
+        camera.isThirdView = !camera.isThirdView;
     }
 
 }
