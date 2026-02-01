@@ -1,13 +1,14 @@
-#ifndef PLAYER
-#define PLAYER
+#ifndef PLAYER_H
+#define PLAYER_H 
 
 #include <GameObject/Creature.h>
 
 class Player {
-private:
+public:
 	Creature creature;
+
+	void frontPlayer(glm::vec3 front);
 };
 
-
-#endif
+#endif // PLAYER
 #pragma once

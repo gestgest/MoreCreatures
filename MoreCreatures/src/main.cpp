@@ -83,12 +83,14 @@ int main()
 
 
     Ground* ground = new Ground(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
-    Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5f, 0.5f, 0.5f));
+    Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5882353, 0.2941176, 0.0));
 
     unsigned int ground_texture;
-
+    unsigned int normalMap;
     player = mouse;
     loadTexture(ground_texture, "textures/snow.png");
+    loadTexture(normalMap, "textures/snow_normal.png");
+
     ground->setTexture(ground_texture);
 
     objects.push_back(ground);
@@ -221,6 +223,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastY = ypos;
 
     camera.ProcessMouseMovement(xoffset, yoffset, player->getPosition());
+    player->setFront(camera.getFrontPlayer());
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called

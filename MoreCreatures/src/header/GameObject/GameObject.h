@@ -1,5 +1,5 @@
-#ifndef GAMEOBJECT
-#define GAMEOBJECT
+#ifndef GAMEOBJECT_H
+#define GAMEOBJECT_H
 #include <header/shader.h>
 #include <header/camera.h>
 #include <glad/glad.h>
@@ -11,45 +11,6 @@ const unsigned int SCR_HEIGHT = 800;
 #define COR  -0.33f; //반발계수
 #define GRAVITY_ACCELERATION -9.81f
 
-void debugMat(glm::mat4 m)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            std::cout << m[i][j] << ' ';
-        }
-        std::cout << '\n';
-
-    }
-
-}
-
-bool isInBoundary(float a, float b, float a_size, float b_size)
-{
-    float a_1 = a - a_size / 2;
-    float a_2 = a + a_size / 2;
-    float b_1 = b - b_size / 2;
-    float b_2 = b + b_size / 2;
-
-    if
-        (
-            (a_1 <= b_1 && b_1 <= a_2) ||
-            (a_1 <= b_2 && b_2 <= a_2)
-            )
-    {
-        return true;
-    }
-    else if
-        (
-            (b_1 <= a_1 && a_1 <= b_2) ||
-            (b_1 <= a_2 && a_2 <= b_2)
-            )
-    {
-        return true;
-    }
-    return false;
-}
 
 class GameObject {
 protected:
@@ -330,6 +291,46 @@ public:
     bool getIsActive()
     {
         return isActive;
+    }
+
+    //debug
+    void debugMat(glm::mat4 m)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                std::cout << m[i][j] << ' ';
+            }
+            std::cout << '\n';
+
+        }
+    }
+
+    bool isInBoundary(float a, float b, float a_size, float b_size)
+    {
+        float a_1 = a - a_size / 2;
+        float a_2 = a + a_size / 2;
+        float b_1 = b - b_size / 2;
+        float b_2 = b + b_size / 2;
+
+        if
+            (
+                (a_1 <= b_1 && b_1 <= a_2) ||
+                (a_1 <= b_2 && b_2 <= a_2)
+                )
+        {
+            return true;
+        }
+        else if
+            (
+                (b_1 <= a_1 && a_1 <= b_2) ||
+                (b_1 <= a_2 && a_2 <= b_2)
+                )
+        {
+            return true;
+        }
+        return false;
     }
 };
 

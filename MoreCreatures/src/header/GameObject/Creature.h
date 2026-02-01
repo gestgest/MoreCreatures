@@ -5,9 +5,13 @@
 
 class Creature : public GameObject {
     bool isGround;
+
+protected:
+    glm::vec3 front;
 public:
     Creature()
     {
+        front = glm::vec3(0, 0, 0);
         //initObject();
     }
     Creature(Shader& shader, glm::vec3 color) : GameObject(shader, color)
@@ -28,6 +32,11 @@ public:
     bool GetIsGround()
     {
         return isGround;
+    }
+
+    void setFront(glm::vec3 front)
+    {
+        this->front = front;
     }
 };
 #endif
