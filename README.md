@@ -15,10 +15,10 @@ open world survival game with OpenGL
 <img width="1199" height="831" alt="image" src="https://github.com/user-attachments/assets/fe6f10bb-b866-4a09-b876-1c9ffeac57dd" />
 
 ### 이동
+![bandicam 2026-03-05 20-48-15-421](https://github.com/user-attachments/assets/a1c35149-55b7-439c-a5f7-c1cf037c5414)
 
 ### 1인칭 / 3인칭 전환
-<img width="525" height="314" alt="image" src="https://github.com/user-attachments/assets/d2599a58-55fd-4dbe-8b1c-f9a86bd60583" />
-
-
+![bandicam 2026-03-05 20-48-15-421 (1)](https://github.com/user-attachments/assets/86e55647-b020-4b16-a728-cbfa34af6ad5)
 
 ### 중력
+![bandicam 2026-03-05 20-48-15-421 (2)](https://github.com/user-attachments/assets/c2074e8e-499e-4706-8b82-5fa7f808d810)
