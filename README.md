@@ -1,6 +1,6 @@
 # MoreCreatures
 open world survival game with OpenGL
-간단한 1인칭 / 3인칭 시점 캐릭터 조작과 카메라 추적, 기본 렌더링 파이프라인을 구현한 C++/OpenGL 데모 프로젝트입니다.
+- 간단한 1인칭 / 3인칭 시점 캐릭터 조작과 카메라 추적, 기본 렌더링 파이프라인을 구현한 C++/OpenGL 데모 프로젝트입니다.
 
 ### 구현한 기술
 - 이동
