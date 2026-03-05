@@ -113,6 +113,7 @@ int main()
             objects[i]->applyPhysics(deltaTime);
             for (int j = i + 1; j < objects.size(); j++)
             {
+                //움직이는 물체면
                 if (!objects[j]->getIsActive())
                 {
                     continue;

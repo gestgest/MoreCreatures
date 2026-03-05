@@ -213,17 +213,8 @@ public:
             return false;
         }
 
-        /*
-        if (object->position.y < 2.0f)
-        {
-            std::cout << "bullet_y : " << object->position.y << '\n';
-            std::cout << "ground_y : " << this->position.y << '\n';
-            std::cout << "bullet_scale : " << object->scale.y << '\n';
-            std::cout << "ground_scale: " << this->scale.y << '\n';
-        }
-        */
 
-        // ==이어도 0 ~ 10, 0 ~ 10, 0 ~ 10 즉, 3개가 같아야함 ==> 하나라도 다르면 커트
+        // ==이어도 0 ~ 10, 0 ~ 10, 0 ~ 10 즉, 3개가 같아야함 ==> 하나라도 다르면 물체가 만날 수 없음
         //x비교
         if (!isInBoundary(this->position.x, object->position.x, this->scale.x, object->scale.x))
         {
@@ -259,6 +250,7 @@ public:
 
     void applyPhysics(float deltaTime)
     {
+        //고정된 물체라면
         if (isStatic || !isActive)
         {
             return;

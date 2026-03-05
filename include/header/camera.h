@@ -144,6 +144,7 @@ public:
     }
 
 private:
+    // 
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraPosition(glm::vec3 player_pos)
     {
@@ -151,6 +152,7 @@ private:
         trackingPos.y = -sin(glm::radians(Pitch));
         trackingPos.z = sin(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
 
+        //3인칭 뷰
         if (isThirdView)
         {
             trackingPos *= Zoom;
@@ -162,6 +164,7 @@ private:
             glm::vec3 frontCameraVector = player_pos - Position;
             updateCameraVectors(frontCameraVector);
         }
+        //1인칭 뷰
         else
         {
             updateCameraVectors(-trackingPos);
