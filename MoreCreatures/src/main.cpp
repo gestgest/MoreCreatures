@@ -40,8 +40,6 @@ bool firstMouse = true;
 
 void loadTexture(unsigned int& texture, std::string path);
 void depthProcessing(unsigned int& depthMapFBO, unsigned int& depthMap);
-const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024; // configure depth map FBO
-
 
 int main()
 {
@@ -116,6 +114,12 @@ int main()
         processInput(window);
         camera.move(player->getPosition());
 
+        // shadow projection 계산
+        float near_plane = 1.0f, far_plane = 7.5f;
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //start, end, 위 벡터 : end 아무거나 해도 다 알아서 기울기 계산해준다.
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
         for (int i = 0; i < objects.size(); i++)
         {
             objects[i]->applyPhysics(deltaTime);
@@ -146,7 +150,7 @@ int main()
 
         for (int i = 0; i < objects.size(); i++)
         {
-            objects[i]->drawGameObject(camera, lightColor, lightPos);
+            objects[i]->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -283,7 +287,7 @@ void depthProcessing(unsigned int & depthMapFBO, unsigned int& depthMap)
     glBindTexture(GL_TEXTURE_2D, depthMap); //빈 캔버스 활성화
 
     //깊이 전용 메모리 할당. 원래는 GL_RGB지만 깊이만 저장하니 GL_DEPTH_COMPONENT
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
     //픽셀을 확대 축소할때 부드럽게 할건지(GL_LINEAR) 그대로 가져올지(GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

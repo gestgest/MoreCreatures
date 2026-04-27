@@ -60,7 +60,7 @@ public:
         this->texture = &texture;
     }
 
-    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos)
+    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix)
     {
         shader->use();
 

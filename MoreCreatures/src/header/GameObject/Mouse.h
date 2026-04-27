@@ -135,13 +135,17 @@ public:
     }
 
 
-    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos)
+    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix)
     {
         float pi = acosf(-1.0f);
         shader->use();
         //fs
         // light properties
         shader->setVec3("objectColor", color);
+        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        //todo - 여기에 그림자 map 넣기
+
 
         //원 그릴때 포지션은 밑바닥기준
         //몸통

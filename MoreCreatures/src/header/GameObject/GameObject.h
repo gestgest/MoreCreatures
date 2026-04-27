@@ -153,7 +153,7 @@ public:
         this->shader = &shader;
     }
     //가상 함수
-    virtual void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos) = 0;
+    virtual void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix) = 0;
     void drawMiniGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
         glm::vec3 mini_scale = glm::vec3(1, 1, 1)
     )
