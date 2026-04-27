@@ -73,5 +73,11 @@
     <None Include="src\vs\mouse.vs">
       <Filter>소스 파일\vs</Filter>
     </None>
+    <None Include="src\fs\DepthShader.fs">
+      <Filter>소스 파일\fs</Filter>
+    </None>
+    <None Include="src\vs\DepthShader.vs">
+      <Filter>소스 파일\vs</Filter>
+    </None>
   </ItemGroup>
 </Project>

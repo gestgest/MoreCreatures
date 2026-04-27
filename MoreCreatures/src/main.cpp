@@ -39,6 +39,8 @@ bool firstMouse = true;
 
 
 void loadTexture(unsigned int& texture, std::string path);
+void depthProcessing(unsigned int& depthMapFBO, unsigned int& depthMap);
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024; // configure depth map FBO
 
 
 int main()
@@ -80,7 +82,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
     Shader mouseShader("src/vs/mouse.vs", "src/fs/mouse.fs");
     Shader groundShader("src/vs/ground.vs", "src/fs/ground.fs");
-
+    Shader depthShader("src/vs/DepthShader.vs", "src/fs/DepthShader.fs");
 
     Ground* ground = new Ground(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
     Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5882353, 0.2941176, 0.0));
@@ -90,6 +92,12 @@ int main()
     player = mouse;
     loadTexture(ground_texture, "textures/snow.png");
     loadTexture(normalMap, "textures/snow_normal.png");
+
+    
+    //shadow map
+    unsigned int depthMap; // create depth texture
+    unsigned int depthMapFBO;
+    depthProcessing(depthMapFBO, depthMap);
 
     ground->setTexture(ground_texture);
 
@@ -264,4 +272,33 @@ void loadTexture(unsigned int& texture, std::string path)
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+}
+
+
+//shadow mapping pre processing
+void depthProcessing(unsigned int & depthMapFBO, unsigned int& depthMap)
+{
+    glGenFramebuffers(1, &depthMapFBO); //프레임버퍼 1번
+    glGenTextures(1, &depthMap); //특수 도화지 판(FBO)
+    glBindTexture(GL_TEXTURE_2D, depthMap); //빈 캔버스 활성화
+
+    //깊이 전용 메모리 할당. 원래는 GL_RGB지만 깊이만 저장하니 GL_DEPTH_COMPONENT
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+    //픽셀을 확대 축소할때 부드럽게 할건지(GL_LINEAR) 그대로 가져올지(GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    //todo : 여기에 문제가 있다는데?
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    //FBO와 
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); //프레임 버퍼로 바인드
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0); //프레임버퍼dhk ㅡ메 qnxdlrl
+
+
+    glDrawBuffer(GL_NONE);  // 색상 버퍼 비활성화
+    glReadBuffer(GL_NONE);  // 색상 버퍼 비활성화
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); //초기화
 }

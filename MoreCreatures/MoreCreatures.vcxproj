@@ -142,8 +142,10 @@
     <ClInclude Include="src\header\GameObject\Player.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\fs\DepthShader.fs" />
     <None Include="src\fs\ground.fs" />
     <None Include="src\fs\mouse.fs" />
+    <None Include="src\vs\DepthShader.vs" />
     <None Include="src\vs\ground.vs" />
     <None Include="src\vs\mouse.vs" />
   </ItemGroup>
