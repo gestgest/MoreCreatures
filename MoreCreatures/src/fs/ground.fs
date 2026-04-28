@@ -4,19 +4,61 @@ out vec4 FragColor;
 in vec3 Normal;  
 in vec3 FragPos;  
 in vec2 TexCoord;
-  
+in vec4 FragPosLightSpace;
+
 // texture samplers => 
 //shader.setInt로 세팅, glActiveTexture(GL_TEXTURE0);로 설정
 //예를 들어 setInt0이면 glActiveTexture의 0번 참조하라는 뜻
 uniform sampler2D texture1;
+uniform sampler2D shadowMap;
 //uniform sampler2D normalMap;
 
 uniform vec3 lightPos; 
 uniform vec3 viewPos; 
 uniform vec3 lightColor;
 
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
+{
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r; //=> 그림에서의 g값? z값?
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
+
+    float shadow = 0.0; 
+
+    
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
+        }    
+    }
+    
+    shadow /= 9.0;
+    
+    // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+    // check whether current frag pos is in shadow
+
+    //이게 아마 pcf값?
+    return shadow;
+}
+
 void main()
 {
+    vec3 color = texture(texture1, TexCoord).rgb;
     // ambient
     float ambientStrength = 0.3; //얼마나 밝은지
     vec3 ambient = ambientStrength * lightColor;
@@ -25,7 +67,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor * texture(texture1, TexCoord).rgb;
+    vec3 diffuse = diff * lightColor * color;
     
     // specular
     float specularStrength = 0.5;
@@ -34,7 +76,10 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 1);
     vec3 specular = specularStrength * spec * lightColor;  
         
-    vec3 result = (ambient + diffuse + specular);
-    FragColor = vec4( result, 1.0);
+    // calculate shadow
+    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);                     //쉐도우가 오면 1, 안 오면 0
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;     //여기만 다르다
+    
+    FragColor = vec4(lighting, 1.0);
     //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 } 

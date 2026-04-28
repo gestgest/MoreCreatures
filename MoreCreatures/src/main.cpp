@@ -102,6 +102,9 @@ int main()
     objects.push_back(ground);
     objects.push_back(mouse);
 
+    mouse->setShadowMap(depthMap);
+    ground->setShadowMap(depthMap);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -143,6 +146,20 @@ int main()
                 }
             }
         }
+
+        depthShader.use();
+        depthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT); // 뷰포트를 도화지 크기에 맞춤
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); // 그림자 도화지(FBO) 장착!
+        glClear(GL_DEPTH_BUFFER_BIT); // 도화지 초기화
+
+        mouse->drawShadow(depthShader);
+        ground->drawShadow(depthShader);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 찰칵! 끝났으니 다시 모니터 화면으로 복귀
+
+
 
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //sky
@@ -293,14 +310,18 @@ void depthProcessing(unsigned int & depthMapFBO, unsigned int& depthMap)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    //todo : 여기에 문제가 있다는데?
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //혹시나 문제생기면 이거로 교체
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // [수정] 맵 밖은 무조건 "그림자 없음(1.0)"으로 처리
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     //FBO와 
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); //프레임 버퍼로 바인드
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0); //프레임버퍼dhk ㅡ메 qnxdlrl
-
 
     glDrawBuffer(GL_NONE);  // 색상 버퍼 비활성화
     glReadBuffer(GL_NONE);  // 색상 버퍼 비활성화

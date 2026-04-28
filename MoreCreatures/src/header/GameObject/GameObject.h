@@ -14,6 +14,8 @@ const unsigned int SCR_HEIGHT = 800;
 
 class GameObject {
 protected:
+    unsigned int shadowMap;
+
     unsigned int vao;
     unsigned int vbo;
     Shader* shader;
@@ -324,6 +326,13 @@ public:
         }
         return false;
     }
+
+
+    void setShadowMap(unsigned int& shadowMap)
+    {
+        this->shadowMap = shadowMap;
+    }
+
 };
 
 #endif

@@ -134,7 +134,6 @@ public:
         }
     }
 
-
     void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix)
     {
         float pi = acosf(-1.0f);
@@ -143,9 +142,10 @@ public:
         // light properties
         shader->setVec3("objectColor", color);
         shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
         //todo - 여기에 그림자 map 넣기
-
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, shadowMap);
+        shader->setInt("shadowMap", 1); // "쉐이더야, 그림자는 1번에서 읽어와!"
 
         //원 그릴때 포지션은 밑바닥기준
         //몸통
@@ -154,6 +154,40 @@ public:
 
         //머리
         GameObject::drawMiniGameObject(camera, lightColor, lightPos, color, glm::vec3(0.0f, -0.5f, 0.0f) + front * 1.5f, glm::vec3(0.75f, 0.75f, 0.75f));
+        glDrawArrays(GL_TRIANGLES, 0, nSphereVert); 
+    }
+
+   void drawShadow(Shader& shader)
+    {
+        // 1. 쥐의 메쉬(VAO) 바인딩
+        glBindVertexArray(vao);
+
+        // ==========================================
+        // 2. 몸통(Body)의 위치 세팅 및 그리기
+        // ==========================================
+        glm::mat4 bodyModel = glm::mat4(1.0f);
+        // 위치: 현재 쥐의 위치 + 밑바닥 기준 오프셋
+        bodyModel = glm::translate(bodyModel, position + glm::vec3(0.0f, -0.5f, 0.0f));
+        
+        // 계산된 몸통 행렬을 깊이 쉐이더로 전송
+        shader.setMat4("model", bodyModel);
+        
+        // 몸통 그리기!
+        glDrawArrays(GL_TRIANGLES, 0, nSphereVert); 
+
+        // ==========================================
+        // 3. 머리(Head)의 위치 세팅 및 그리기
+        // ==========================================
+        glm::mat4 headModel = glm::mat4(1.0f);
+        // 위치: 몸통 위치 + 쥐가 바라보는 방향(front)으로 1.5만큼 앞으로
+        headModel = glm::translate(headModel, position + glm::vec3(0.0f, -0.5f, 0.0f) + front * 1.5f);
+        // 크기: 머리는 몸통보다 작게 (0.75배) 축소
+        headModel = glm::scale(headModel, glm::vec3(0.75f, 0.75f, 0.75f));
+
+        // 계산된 머리 행렬을 깊이 쉐이더로 전송
+        shader.setMat4("model", headModel);
+        
+        // 머리 그리기!
         glDrawArrays(GL_TRIANGLES, 0, nSphereVert); 
     }
 };
