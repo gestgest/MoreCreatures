@@ -1,6 +1,5 @@
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
-#include <header/shader.h>
 #include <header/camera.h>
 #include <glad/glad.h>
 
@@ -14,19 +13,9 @@ const unsigned int SCR_HEIGHT = 800;
 
 class GameObject {
 protected:
-    unsigned int shadowMap;
-
-    unsigned int vao;
-    unsigned int vbo;
-    Shader* shader;
-
-    int nSphereVert;
-    int nSphereAttr;
-
     glm::vec3 scale; //물리 scale
     glm::vec3 position;
     glm::vec3 velocity;
-    glm::vec3 color;
 
     float movement_speed;
 
@@ -40,95 +29,6 @@ protected:
     }
 
 
-    // position, normal, tex_coords.
-    // 매개변수 방정식으로 원 그리는 함수 => 
-    void init_sphere(float** vertices) //높이는 3.14
-    {
-        //nAttr : 8
-        // sphere: set up vertex data and configure vertex attributes
-        float pi = acosf(-1.0f);	// pi = 3.14152...
-        float pi2 = 2.0f * pi;
-        int nu = 40, nv = 20;
-        const double du = pi2 / nu;
-        const double dv = pi / nv;
-
-        //19 * 40 * 6
-        nSphereVert = (nv - 1) * nu * 6;		// two triangles
-        nSphereAttr = 6;
-        *vertices = (float*)malloc(sizeof(float) * (nSphereVert) * (nSphereAttr));
-
-        float u, v;
-        int k = 0;
-
-        v = 0.0f;
-        u = 0.0f;
-        for (v = (-0.5f) * pi + dv; v < 0.5f * pi - dv; v += dv)
-        {
-            for (u = 0.0f; u < pi2; u += du)
-            {
-                // p(u,v)
-                (*vertices)[k++] = cosf(v) * cosf(u); 	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v); 	// position (x,y,z)
-                (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v);		// normal (x,y z)
-                // 이렇게 해서 8개의 속성 => nAttr
-
-
-                // p(u+du,v)
-                (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v); 	// position
-                (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v);		// normal
-
-                // p(u,v+dv)
-                (*vertices)[k++] = cosf(v + dv) * cosf(u);	(*vertices)[k++] = cosf(v + dv) * sinf(u);	(*vertices)[k++] = sinf(v + dv);	// position
-                (*vertices)[k++] = cosf(v + dv) * cosf(u);	(*vertices)[k++] = cosf(v + dv) * sinf(u);	(*vertices)[k++] = sinf(v + dv);	// normal
-
-                // p(u+du,v)
-                (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v); 	// position
-                (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v);		// normal
-
-                // p(u+du,v+dv)
-                (*vertices)[k++] = cosf(v + dv) * cosf(u + du);	(*vertices)[k++] = cosf(v + dv) * sinf(u + du);	(*vertices)[k++] = sinf(v + dv); 	// position
-                (*vertices)[k++] = cosf(v + dv) * cosf(u + du);	(*vertices)[k++] = cosf(v + dv) * sinf(u + du);	(*vertices)[k++] = sinf(v + dv);	// normal
-
-                // p(u,v+dv)
-                (*vertices)[k++] = cosf(v + dv) * cosf(u);	(*vertices)[k++] = cosf(v + dv) * sinf(u);	(*vertices)[k++] = sinf(v + dv);	// position
-                (*vertices)[k++] = cosf(v + dv) * cosf(u);	(*vertices)[k++] = cosf(v + dv) * sinf(u);	(*vertices)[k++] = sinf(v + dv);	// normal
-            }
-        }
-        // triangles around north pole and south pole
-        for (u = 0.0f; u < pi2; u += du)
-        {
-            // triangles around north pole
-            // p(u,pi/2-dv)
-            v = 0.5f * pi - dv;
-            (*vertices)[k++] = cosf(v) * cosf(u); 	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v); 	// position
-            (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v);		// normal
-
-            // p(u+du,pi/2-dv)
-            v = 0.5f * pi - dv;
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du); (*vertices)[k++] = sinf(v); 	// position
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du); (*vertices)[k++] = sinf(v);		// normal
-
-            // p(u,pi/2) = (0, 1. 0)  ~ north pole
-            v = 0.5f * pi;
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v); 	 // position
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du);	(*vertices)[k++] = sinf(v);		 // normal
-
-            // triangles around south pole
-            // p(u,-pi/2) = (0, -1, 0)  ~ south pole
-            v = (-0.5f) * pi;
-            (*vertices)[k++] = cosf(v) * cosf(u); 	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v); 		// position
-            (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v);			// normal
-
-            // p(u+du,-pi/2+dv)
-            v = (-0.5f) * pi + dv;
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du); (*vertices)[k++] = sinf(v);	// position
-            (*vertices)[k++] = cosf(v) * cosf(u + du);	(*vertices)[k++] = cosf(v) * sinf(u + du); (*vertices)[k++] = sinf(v);	// normal
-
-            // p(u,-pi/2+dv)
-            (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u); (*vertices)[k++] = sinf(v);	// position
-            (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u); (*vertices)[k++] = sinf(v);	// normal
-        }
-    }
-
 public:
     GameObject()
     {
@@ -140,26 +40,13 @@ public:
 
         isStatic = true;
     }
-    GameObject(Shader& shader, glm::vec3 color)
-    {
-        setShader(shader);
-        this->color = color;
-    }
-    ~GameObject()
-    {
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-    }
-    void setShader(Shader& shader)
-    {
-        this->shader = &shader;
-    }
     //가상 함수
     virtual void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix) = 0;
-    void drawMiniGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
+    void updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
         glm::vec3 mini_scale = glm::vec3(1, 1, 1)
     )
     {
+        //여기라인은 따로 만들어야 함
         //fs 셰이더 속성은 drawObject위에
 
         // view/projection transformations
@@ -182,8 +69,11 @@ public:
         model = glm::scale(model, mini_scale);
         shader->setMat4("model", model);
 
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 6); //삼각형
+        //나중에 drawGameObject에 넣자
+        //mesh->bind()
+        //mesh->draw()
+        //glBindVertexArray(vao); //bind
+        //glDrawArrays(GL_TRIANGLES, 0, 6); //삼각형 => draw
     }
 
     void playerMove(glm::vec3 vec, float deltaTime)
@@ -194,14 +84,6 @@ public:
         move(vec, velocity);
     }
 
-    unsigned int& getVAO()
-    {
-        return vao;
-    }
-    unsigned int& getVBO()
-    {
-        return vbo;
-    }
     glm::vec3 getPosition()
     {
         return position;
@@ -287,20 +169,6 @@ public:
         return isActive;
     }
 
-    //debug
-    void debugMat(glm::mat4 m)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                std::cout << m[i][j] << ' ';
-            }
-            std::cout << '\n';
-
-        }
-    }
-
     bool isInBoundary(float a, float b, float a_size, float b_size)
     {
         float a_1 = a - a_size / 2;
@@ -325,12 +193,6 @@ public:
             return true;
         }
         return false;
-    }
-
-
-    void setShadowMap(unsigned int& shadowMap)
-    {
-        this->shadowMap = shadowMap;
     }
 
 };

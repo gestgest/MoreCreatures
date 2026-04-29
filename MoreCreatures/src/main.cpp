@@ -117,9 +117,9 @@ int main()
         processInput(window);
         camera.move(player->getPosition());
 
-        // shadow projection 계산
-        float near_plane = 1.0f, far_plane = 7.5f;
-        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        // shadow projection 계산 => 
+        float near_plane = 1.0f, far_plane = 12.5f;
+        glm::mat4 lightProjection = glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, near_plane, far_plane);
         glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //start, end, 위 벡터 : end 아무거나 해도 다 알아서 기울기 계산해준다.
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
