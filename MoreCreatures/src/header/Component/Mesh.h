@@ -1,4 +1,4 @@
-﻿#ifndef MESH
+#ifndef MESH
 #define MESH
 
 #include <header/shader.h>

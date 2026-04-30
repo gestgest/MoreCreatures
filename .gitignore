@@ -45,3 +45,7 @@ MoreCreatures/x64/Debug/
 *.tlog
 *.vcxproj
 *.filiters
+
+
+#claude
+.claude/
