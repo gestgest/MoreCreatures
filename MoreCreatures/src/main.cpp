@@ -11,7 +11,7 @@
 #include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
-//std_image.h�� �̿��ؼ� �̹��� ������ ���� �̰� �����ؾ���
+//std_image.h를 이용해서 이미지 열려면 위에 이거 정의해야함
 #include <header/std_image.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -126,7 +126,7 @@ int main()
         RenderScenePass();
     }
 
-    //�޸� ����
+    //메모리 제거
     for (int i = 0; i < objects.size(); i++)
     {
         delete objects[i];
@@ -166,7 +166,7 @@ void processInput(GLFWwindow* window)
     }
 }
 
-//�ݹ��Լ�
+//콜백함수
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
@@ -214,7 +214,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 
-//�ؽ��İ� �ε�
+//텍스쳐값 로드
 void loadTexture(unsigned int& texture, std::string path)
 {
     int width, height, nrChannels;
@@ -249,31 +249,31 @@ void loadTexture(unsigned int& texture, std::string path)
 //shadow mapping pre processing
 void depthProcessing(unsigned int & depthMapFBO, unsigned int& depthMap)
 {
-    glGenFramebuffers(1, &depthMapFBO); //�����ӹ��� 1��
-    glGenTextures(1, &depthMap); //Ư�� ��ȭ�� ��(FBO)
-    glBindTexture(GL_TEXTURE_2D, depthMap); //�� ĵ���� Ȱ��ȭ
+    glGenFramebuffers(1, &depthMapFBO); //프레임버퍼 1번
+    glGenTextures(1, &depthMap); //특수 도화지 판(FBO)
+    glBindTexture(GL_TEXTURE_2D, depthMap); //빈 캔버스 활성화
 
-    //���� ���� �޸� �Ҵ�. ������ GL_RGB���� ���̸� �����ϴ� GL_DEPTH_COMPONENT
+    //깊이 전용 메모리 할당. 원래는 GL_RGB지만 깊이만 저장하니 GL_DEPTH_COMPONENT
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-    //�ȼ��� Ȯ�� ����Ҷ� �ε巴�� �Ұ���(GL_LINEAR) �״�� ��������(GL_NEAREST)
+    //픽셀을 확대 축소할때 부드럽게 할건지(GL_LINEAR) 그대로 가져올지(GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    //Ȥ�ó� ��������� �̰ŷ� ��ü
+    //혹시나 문제생기면 이거로 교체
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // [����] �� ���� ������ "�׸��� ����(1.0)"���� ó��
+    // [수정] 맵 밖은 무조건 "그림자 없음(1.0)"으로 처리
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    //FBO�� 
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); //������ ���۷� ���ε�
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0); //�����ӹ���dhk �Ѹ� qnxdlrl
+    //FBO와 
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); //프레임 버퍼로 바인드
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0); //프레임버퍼dhk ㅡ메 qnxdlrl
 
-    glDrawBuffer(GL_NONE);  // ���� ���� ��Ȱ��ȭ
-    glReadBuffer(GL_NONE);  // ���� ���� ��Ȱ��ȭ
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); //�ʱ�ȭ
+    glDrawBuffer(GL_NONE);  // 색상 버퍼 비활성화
+    glReadBuffer(GL_NONE);  // 색상 버퍼 비활성화
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); //초기화
 }
