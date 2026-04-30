@@ -14,15 +14,6 @@ public:
         front = glm::vec3(0, 0, 0);
         //initObject();
     }
-    Creature(Shader& shader, glm::vec3 color) : GameObject(shader, color)
-    {
-        //initObject();
-    }
-
-    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix)
-    {
-
-    }
 
     void SetIsGround(bool isGround)
     {

@@ -137,6 +137,7 @@
     <ClInclude Include="..\include\header\shader.h" />
     <ClInclude Include="src\header\Component\Component.h" />
     <ClInclude Include="src\header\Component\Mesh.h" />
+    <ClInclude Include="src\header\Config.h" />
     <ClInclude Include="src\header\GameObject\Creature.h" />
     <ClInclude Include="src\header\GameObject\GameObject.h" />
     <ClInclude Include="src\header\GameObject\Ground.h" />

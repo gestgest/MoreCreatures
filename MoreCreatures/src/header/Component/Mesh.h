@@ -1,28 +1,32 @@
-#ifndef MESH
+﻿#ifndef MESH
 #define MESH
 
 #include <header/shader.h>
 #include <header/camera.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <Config.h>
 #include "Component.h"
 
 class Mesh : public Component {
 protected:
-    unsigned int shadowMap;
+    unsigned int shadowMap = 0;
 
-    unsigned int vao;
-    unsigned int vbo;
+    unsigned int vao = 0;
+    unsigned int vbo = 0;
     Shader* shader;
 
-    int nSphereVert;
-    int nSphereAttr;
+    int nSphereVert = 0;
+    int nSphereAttr = 0;
+    int vertexCount = 0; //Draw에서 사용할 정점 개수
 
     glm::vec3 color;
 
     // position, normal, tex_coords.
-    // �Ű����� ���������� �� �׸��� �Լ� => 
-    void init_sphere(float** vertices) //���̴� 3.14
+    //      =>
+    void init_sphere(float** vertices) // 3.14
     {
         //nAttr : 8
         // sphere: set up vertex data and configure vertex attributes
@@ -49,7 +53,7 @@ protected:
                 // p(u,v)
                 (*vertices)[k++] = cosf(v) * cosf(u); 	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v); 	// position (x,y,z)
                 (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v);		// normal (x,y z)
-                // �̷��� �ؼ� 8���� �Ӽ� => nAttr
+                //   8  => nAttr
 
 
                 // p(u+du,v)
@@ -126,20 +130,20 @@ public:
     }
 
 
-    void updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
+    void updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 position,
         glm::vec3 mini_scale = glm::vec3(1, 1, 1)
     )
     {
-        //��������� ���� ������ ��
-        //fs ���̴� �Ӽ��� drawObject����
-
+        //
+        //fs   drawObject
+        //엄준식
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //ī�޶� ������
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //
         //glm::mat4 view = glm::lookAt(camera.Position, glm::vec3(0.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
         glm::mat4 view = camera.GetViewMatrix();
 
 
-        //m v p ����3
+        //m v p 3
         shader->setMat4("projection", projection);
         shader->setMat4("view", view);
         //debugMat(view);
@@ -149,13 +153,53 @@ public:
         shader->setVec3("viewPos", camera.Position);
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, position + addPos);
+        model = glm::translate(model, position);
         model = glm::scale(model, mini_scale);
         shader->setMat4("model", model);
 
-        //���߿� drawGameObject�� ����
+        // drawGameObject 
         //mesh->bind()
         //mesh->draw()
+    }
+
+    //구체용 버퍼 셋업 (서브클래스가 호출)
+    void setupAsSphere()
+    {
+        float* sphereVerts = nullptr;
+        init_sphere(&sphereVerts);
+
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, nSphereVert * nSphereAttr * sizeof(float), sphereVerts, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        vertexCount = nSphereVert;
+        free(sphereVerts);
+    }
+
+    //텍스처 좌표 포함 (pos3 + normal3 + tex2 = 8 floats per vertex)
+    void setupWithTexcoords(const float* vertices, int byteSize, int nVertices)
+    {
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, byteSize, vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+
+        vertexCount = nVertices;
     }
 
     // property
@@ -168,6 +212,23 @@ public:
     {
         return vbo;
     }
+    Shader* getShader()
+    {
+        return shader;
+    }
+    glm::vec3 getColor()
+    {
+        return color;
+    }
+    unsigned int getShadowMap()
+    {
+        return shadowMap;
+    }
+    int getVertexCount()
+    {
+        return vertexCount;
+    }
+
     void setShader(Shader& shader)
     {
         this->shader = &shader;
@@ -184,7 +245,7 @@ public:
 
     void Draw()
     {
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
     }
 
 };

@@ -5,18 +5,23 @@
 
 class Ground : public GameObject {
 
-    unsigned int* texture;
+    unsigned int* texture = nullptr;
 
 public:
     Ground()
     {
-        initObject();
+        initObject(nullptr, glm::vec3(1.0f));
     }
-    Ground(Shader& shader, glm::vec3 color) : GameObject(shader, color)
+    Ground(Shader& shader, glm::vec3 color)
     {
-        initObject();
+        initObject(&shader, color);
     }
-    void initObject()
+    ~Ground()
+    {
+        delete mesh;
+    }
+
+    void initObject(Shader* shaderPtr, glm::vec3 color)
     {
         position = glm::vec3(0.0f, -0.5f, 0.0f);
         scale = glm::vec3(128.0f, 1.0f, 128.0f);
@@ -34,25 +39,12 @@ public:
              scale.x / 2, -1.0f, -scale.z / 2,   0.0f, 1.0f, 0.0f,  scale.x / 2, 0.0f
         };
 
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
-
-        // 1. À§Ä¡(Position) ¼Ó¼º (layout (location = 0))
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        // 2. ¹ı¼±(Normal) ¼Ó¼º (layout (location = 1))
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        // texCoord attribute (layout (location = 2))
-        //index, ¼Ó¼º °¹¼ö, Å¸ÀÔ, 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
+        if (shaderPtr)
+        {
+            Mesh* m = new Mesh(*shaderPtr, color);
+            m->setupWithTexcoords(groundVertices, sizeof(groundVertices), 6);
+            setMesh(m);
+        }
     }
 
     void setTexture(unsigned int& texture)
@@ -60,36 +52,48 @@ public:
         this->texture = &texture;
     }
 
-    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix)
+    void setShadowMap(unsigned int& shadowMap)
     {
+        if (mesh) mesh->setShadowMap(shadowMap);
+    }
+
+    void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix) override
+    {
+        if (!isActive || !mesh) return;
+
+        Shader* shader = mesh->getShader();
+        glm::vec3 color = mesh->getColor();
+
         shader->use();
-        
         shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-        //ÅÃ½ºÃÄ
+        //í…ìŠ¤ì²˜
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, *(this->texture)); //ÅØ½ºÃÄ ³Ö±â?
+        if (texture) glBindTexture(GL_TEXTURE_2D, *texture);
 
-        //todo - ¿©±â¿¡ ±×¸²ÀÚ map ³Ö±â
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, shadowMap);
-        shader->setInt("shadowMap", 1); // "½¦ÀÌ´õ¾ß, ±×¸²ÀÚ´Â 1¹ø¿¡¼­ ÀĞ¾î¿Í!"
+        glBindTexture(GL_TEXTURE_2D, mesh->getShadowMap());
+        shader->setInt("shadowMap", 1); // "ì…°ì´ë”ì•¼, ê·¸ë¦¼ìëŠ” 1ë²ˆì—ì„œ ì½ì–´ì™€!"
 
-        GameObject::drawMiniGameObject(camera, lightColor, lightPos, color, glm::vec3(0.0f, 0.5f, 0.0f));
-        glDrawArrays(GL_TRIANGLES, 0, 6); //»ï°¢Çü
+        mesh->updateUniforms(camera, lightColor, lightPos, color,
+            position + glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(1.0f));
+        mesh->Bind();
+        mesh->Draw();
     }
 
     void drawShadow(Shader& shader)
     {
-        glBindVertexArray(vao);
+        if (!mesh) return;
+
+        glBindVertexArray(mesh->getVAO());
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, position);
-        model = glm::scale(model, scale); // ¶¥ÀÇ Å©±â
+        model = glm::scale(model, scale); // ì›ë˜ í¬ê¸°
 
         shader.setMat4("model", model);
 
-        // ¶¥Àº »ç°¢ÇüÀÌ¹Ç·Î Á¤Á¡ÀÌ 6°³! (ÁãÀÇ nSphereVert¿Í ´Ù¸¨´Ï´Ù)
+        // ì§ì ‘ 6ê°œ ì •ì  (ì§€ë©´ ì‚¬ê°í˜•)
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 };
