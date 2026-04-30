@@ -2,6 +2,9 @@
 #define MESH
 
 #include <header/shader.h>
+#include <header/camera.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "Component.h"
 
 class Mesh : public Component {
@@ -18,8 +21,8 @@ protected:
     glm::vec3 color;
 
     // position, normal, tex_coords.
-    // ¸Å°³º¯¼ö ¹æÁ¤½ÄÀ¸·Î ¿ø ±×¸®´Â ÇÔ¼ö => 
-    void init_sphere(float** vertices) //³ôÀÌ´Â 3.14
+    // ï¿½Å°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ => 
+    void init_sphere(float** vertices) //ï¿½ï¿½ï¿½Ì´ï¿½ 3.14
     {
         //nAttr : 8
         // sphere: set up vertex data and configure vertex attributes
@@ -46,7 +49,7 @@ protected:
                 // p(u,v)
                 (*vertices)[k++] = cosf(v) * cosf(u); 	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v); 	// position (x,y,z)
                 (*vertices)[k++] = cosf(v) * cosf(u);	(*vertices)[k++] = cosf(v) * sinf(u);	(*vertices)[k++] = sinf(v);		// normal (x,y z)
-                // ÀÌ·¸°Ô ÇØ¼­ 8°³ÀÇ ¼Ó¼º => nAttr
+                // ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½Ø¼ï¿½ 8ï¿½ï¿½ï¿½ï¿½ ï¿½Ó¼ï¿½ => nAttr
 
 
                 // p(u+du,v)
@@ -109,6 +112,8 @@ protected:
 
 public:
 
+
+
     Mesh(Shader& shader, glm::vec3 color)
     {
         setShader(shader);
@@ -119,6 +124,41 @@ public:
         glDeleteVertexArrays(1, &vao);
         glDeleteBuffers(1, &vbo);
     }
+
+
+    void updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
+        glm::vec3 mini_scale = glm::vec3(1, 1, 1)
+    )
+    {
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+        //fs ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½Ó¼ï¿½ï¿½ï¿½ drawObjectï¿½ï¿½ï¿½ï¿½
+
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //glm::mat4 view = glm::lookAt(camera.Position, glm::vec3(0.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+        glm::mat4 view = camera.GetViewMatrix();
+
+
+        //m v p ï¿½ï¿½ï¿½ï¿½3
+        shader->setMat4("projection", projection);
+        shader->setMat4("view", view);
+        //debugMat(view);
+
+        shader->setVec3("lightColor", lightColor);
+        shader->setVec3("lightPos", lightPos);
+        shader->setVec3("viewPos", camera.Position);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, position + addPos);
+        model = glm::scale(model, mini_scale);
+        shader->setMat4("model", model);
+
+        //ï¿½ï¿½ï¿½ß¿ï¿½ drawGameObjectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        //mesh->bind()
+        //mesh->draw()
+    }
+
+    // property
 
     unsigned int& getVAO()
     {

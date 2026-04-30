@@ -42,39 +42,8 @@ public:
     }
     //가상 함수
     virtual void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix) = 0;
-    void updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 addPos,
-        glm::vec3 mini_scale = glm::vec3(1, 1, 1)
-    )
-    {
-        //여기라인은 따로 만들어야 함
-        //fs 셰이더 속성은 drawObject위에
-
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //카메라 사이즈
-        //glm::mat4 view = glm::lookAt(camera.Position, glm::vec3(0.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        glm::mat4 view = camera.GetViewMatrix();
 
 
-        //m v p 벡터3
-        shader->setMat4("projection", projection);
-        shader->setMat4("view", view);
-        //debugMat(view);
-
-        shader->setVec3("lightColor", lightColor);
-        shader->setVec3("lightPos", lightPos);
-        shader->setVec3("viewPos", camera.Position);
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, position + addPos);
-        model = glm::scale(model, mini_scale);
-        shader->setMat4("model", model);
-
-        //나중에 drawGameObject에 넣자
-        //mesh->bind()
-        //mesh->draw()
-        //glBindVertexArray(vao); //bind
-        //glDrawArrays(GL_TRIANGLES, 0, 6); //삼각형 => draw
-    }
 
     void playerMove(glm::vec3 vec, float deltaTime)
     {
