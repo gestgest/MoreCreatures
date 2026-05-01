@@ -39,6 +39,24 @@
     <ClCompile Include="src\cpp\Player.cpp">
       <Filter>소스 파일\cpp</Filter>
     </ClCompile>
+    <ClCompile Include="src\cpp\RenderLoop.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\GameObject.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Creature.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Mouse.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Ground.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Mesh.cpp">
+      <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\header\camera.h">

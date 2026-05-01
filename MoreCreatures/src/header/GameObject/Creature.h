@@ -9,26 +9,12 @@ class Creature : public GameObject {
 protected:
     glm::vec3 front;
 public:
-    Creature()
-    {
-        front = glm::vec3(0, 0, 0);
-        //initObject();
-    }
+    Creature();
 
-    void SetIsGround(bool isGround)
-    {
-        //std::cout << "Cd" << '\n';
-        this->isGround = isGround;
-    }
-    bool GetIsGround()
-    {
-        return isGround;
-    }
+    void SetIsGround(bool isGround);
+    bool GetIsGround();
 
-    void setFront(glm::vec3 front)
-    {
-        this->front = front;
-    }
+    void setFront(glm::vec3 front);
 };
 #endif
 #pragma once
