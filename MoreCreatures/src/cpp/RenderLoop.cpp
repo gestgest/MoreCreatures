@@ -121,6 +121,19 @@ void RenderShadowFrustumDebug()
     glDisable(GL_DEPTH_TEST);
     glBindVertexArray(debugLineVAO);
     glDrawArrays(GL_LINES, 0, 24);
+
+    // === 라이트 방향선 추가 그리기 ===
+    // 점광원 위치(lightPos)와 그림자맵이 바라보는 곳(origin)을 빨간 선으로 잇는다.
+    // 이 선의 방향이 곧 모든 광선의 진행 방향(방향광 가정).
+    float dirVerts[6] = {
+        lightPos.x, lightPos.y, lightPos.z,
+        0.0f,       0.0f,       0.0f,           // lookAt target (현재 RenderShadowPass의 두 번째 인자)
+    };
+    glBindBuffer(GL_ARRAY_BUFFER, debugLineVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(dirVerts), dirVerts);
+    debugLineShader->setVec3("lineColor", glm::vec3(1.0f, 0.0f, 0.0f)); // 빨간색
+    glDrawArrays(GL_LINES, 0, 2);
+
     glBindVertexArray(0);
     glEnable(GL_DEPTH_TEST);
 }

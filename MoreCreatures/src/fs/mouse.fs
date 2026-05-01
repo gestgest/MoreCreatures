@@ -57,9 +57,13 @@ void main()
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
   	
-    // diffuse 
+    // diffuse
+    // [수정] 그림자맵은 ortho(방향광) 기반인데, lightDir을 (lightPos - FragPos)로 계산하면
+    //       점광원이 되어 그림자 방향과 음영 방향이 어긋난다.
+    //       lightPos를 "광원 방향"으로 해석해서 모든 픽셀이 같은 방향에서 빛을 받게 한다.
+    //       (lookAt(lightPos, origin, up)와 정확히 일치)
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos);
+    vec3 lightDir = normalize(lightPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
     
