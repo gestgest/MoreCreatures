@@ -132,11 +132,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\cpp\Creature.cpp" />
-    <ClCompile Include="src\cpp\GameObject.cpp" />
-    <ClCompile Include="src\cpp\Ground.cpp" />
+    <ClCompile Include="src\cpp\GameObject\Creature.cpp" />
+    <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
+    <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
     <ClCompile Include="src\cpp\Mesh.cpp" />
-    <ClCompile Include="src\cpp\Mouse.cpp" />
+    <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
     <ClCompile Include="src\cpp\RenderLoop.cpp" />
     <ClCompile Include="src\glad.c" />

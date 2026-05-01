@@ -25,6 +25,9 @@
     <Filter Include="소스 파일\cpp">
       <UniqueIdentifier>{be303869-bed2-4b40-85c2-fb12abad9cbd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\cpp\GameObject">
+      <UniqueIdentifier>{2c5d6e93-9a4b-4f8d-b2c1-7e3a4d5f6b21}</UniqueIdentifier>
+    </Filter>
     <Filter Include="헤더 파일\Component">
       <UniqueIdentifier>{f152c66d-927e-432f-b47a-1f6755491153}</UniqueIdentifier>
     </Filter>
@@ -42,17 +45,17 @@
     <ClCompile Include="src\cpp\RenderLoop.cpp">
       <Filter>소스 파일\cpp</Filter>
     </ClCompile>
-    <ClCompile Include="src\cpp\GameObject.cpp">
-      <Filter>소스 파일\cpp</Filter>
+    <ClCompile Include="src\cpp\GameObject\GameObject.cpp">
+      <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="src\cpp\Creature.cpp">
-      <Filter>소스 파일\cpp</Filter>
+    <ClCompile Include="src\cpp\GameObject\Creature.cpp">
+      <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="src\cpp\Mouse.cpp">
-      <Filter>소스 파일\cpp</Filter>
+    <ClCompile Include="src\cpp\GameObject\Mouse.cpp">
+      <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
-    <ClCompile Include="src\cpp\Ground.cpp">
-      <Filter>소스 파일\cpp</Filter>
+    <ClCompile Include="src\cpp\GameObject\Ground.cpp">
+      <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
     <ClCompile Include="src\cpp\Mesh.cpp">
       <Filter>소스 파일\cpp</Filter>
