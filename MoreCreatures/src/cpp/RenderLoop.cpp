@@ -11,6 +11,7 @@
 #include <Config.h>
 
 #include <vector>
+#include <glm/gtc/matrix_transform.hpp>
 
 extern Camera camera;
 extern glm::vec3 lightPos;
@@ -100,11 +101,10 @@ void RenderScenePass()
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //sky
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //glEnable(GL_DEPTH_TEST);를 추가하면 GL_DEPTH_BUFFER_BIT도 넣어라
 
-    /*for (int i = 0; i < objects.size(); i++)
+    for (int i = 0; i < objects.size(); i++)
     {
         objects[i]->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
     }
-    */
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     glfwSwapBuffers(window);

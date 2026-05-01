@@ -4,7 +4,7 @@ layout (location = 1) in vec3 aNormal;
 
 out vec3 FragPos;
 out vec3 Normal;
-out vec4 FragPosLightSpace;
+out vec4 fragPosLightSpace;
 
 //입력
 uniform mat4 model;
@@ -19,7 +19,7 @@ void main()
 
     //노멀벡터
     Normal = mat3(transpose(inverse(model))) * aNormal;  
-    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
+    fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
 
     gl_Position = projection * view * vec4(FragPos, 1.0);
 }
