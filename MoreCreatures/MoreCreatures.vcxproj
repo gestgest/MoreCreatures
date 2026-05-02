@@ -135,6 +135,7 @@
     <ClCompile Include="src\cpp\GameObject\Creature.cpp" />
     <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
     <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
+    <ClCompile Include="src\cpp\Loader\Loader.cpp" />
     <ClCompile Include="src\cpp\Mesh.cpp" />
     <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="src\header\Component\Component.h" />
     <ClInclude Include="src\header\Component\Mesh.h" />
     <ClInclude Include="src\header\Config.h" />
+    <ClInclude Include="src\header\Loader\Loader.h" />
     <ClInclude Include="src\header\GameObject\Creature.h" />
     <ClInclude Include="src\header\GameObject\GameObject.h" />
     <ClInclude Include="src\header\GameObject\Ground.h" />

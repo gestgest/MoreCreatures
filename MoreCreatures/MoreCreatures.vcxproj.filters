@@ -31,6 +31,12 @@
     <Filter Include="헤더 파일\Component">
       <UniqueIdentifier>{f152c66d-927e-432f-b47a-1f6755491153}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Loader">
+      <UniqueIdentifier>{a3b2c1d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\cpp\Loader">
+      <UniqueIdentifier>{b4c3d2e5-6f7a-4b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -59,6 +65,9 @@
     </ClCompile>
     <ClCompile Include="src\cpp\Mesh.cpp">
       <Filter>소스 파일\cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Loader\Loader.cpp">
+      <Filter>소스 파일\cpp\Loader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +100,9 @@
     </ClInclude>
     <ClInclude Include="src\header\Config.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\Loader\Loader.h">
+      <Filter>헤더 파일\Loader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

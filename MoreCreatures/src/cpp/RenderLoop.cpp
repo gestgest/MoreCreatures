@@ -209,23 +209,22 @@ static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lig
     glm::mat4 lightView = glm::lookAt(center - normal_light, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // (C) 텍셀 스냅: 박스 중심을 그림자맵 텍셀 격자에 맞춤
-    //   - 라이트 공간에서 텍셀 한 칸의 월드 크기 = (2 * radius) / shadowMapSize
-    //   - 중심을 라이트 공간으로 옮긴 뒤, 그 좌표를 텍셀 단위로 floor → 다시 월드로
-    float worldUnitsPerTexel = (2.0f * radius) / (float)shadowMapSize;
-    glm::vec4 centerLS = lightView * glm::vec4(center, 1.0f);
-    centerLS.x = std::floor(centerLS.x / worldUnitsPerTexel) * worldUnitsPerTexel;
+    float worldUnitsPerTexel = (2.0f * radius) / (float)shadowMapSize; //1픽셀에 몇 m인지 => 스크린 사이즈
+    glm::vec4 centerLS = lightView * glm::vec4(center, 1.0f); //라이트 공간으로 전환
+    centerLS.x = std::floor(centerLS.x / worldUnitsPerTexel) * worldUnitsPerTexel; //12.5면 12로 스크린 사이즈 단위로 변환
     centerLS.y = std::floor(centerLS.y / worldUnitsPerTexel) * worldUnitsPerTexel;
-    glm::vec3 snappedCenter = glm::vec3(glm::inverse(lightView) * centerLS);
+    glm::vec3 snappedCenter = glm::vec3(glm::inverse(lightView) * centerLS); //다시 현실 공간으로 전환
 
     // 스냅된 중심으로 lightView 다시 만들기
     lightView = glm::lookAt(snappedCenter - normal_light, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // (D) ortho는 항상 같은 크기 (-radius ~ +radius)
-    //   z 범위는 그림자 캐스터가 박스 뒤쪽에 있어도 잡히도록 넉넉하게
-    constexpr float zRange = 100.0f;
-    glm::mat4 lightProjection = glm::ortho(-radius, radius, -radius, radius, -zRange, zRange);
+// (D) ortho는 항상 같은 크기 (-radius ~ +radius)
+//   z 범위는 그림자 캐스터가 박스 뒤쪽에 있어도 잡히도록 넉넉하게
+constexpr float zRange = 100.0f;
+glm::mat4 lightProjection = glm::ortho(-radius, radius, -radius, radius, -zRange, zRange);
 
-    return lightProjection * lightView;
+//빛 뷰(lightView)로 전환 후 정해진 규격(직육면체)로 전환
+return lightProjection * lightView;
 }
 
 void RenderShadowPass()

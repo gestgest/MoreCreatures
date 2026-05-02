@@ -7,6 +7,8 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Mouse.h>
 
+#include <Loader/Loader.h>
+
 #include <iostream>
 #include <vector>
 
@@ -50,8 +52,13 @@ float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
 
-void loadTexture(unsigned int& texture, std::string path);
 void depthProcessing(unsigned int& depthMapFBO, unsigned int& depthMap);
+
+
+//todo
+//vcpkg 설치
+//Assimp 설치
+
 
 int main()
 {
@@ -100,8 +107,8 @@ int main()
     unsigned int ground_texture;
     unsigned int normalMap;
     player = mouse;
-    loadTexture(ground_texture, "textures/snow.png");
-    loadTexture(normalMap, "textures/snow_normal.png");
+    Loader::loadTexture(ground_texture, "textures/snow.png");
+    Loader::loadTexture(normalMap, "textures/snow_normal.png");
 
     
     //shadow map
@@ -211,38 +218,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(yoffset);
-}
-
-
-//텍스쳐값 로드
-void loadTexture(unsigned int& texture, std::string path)
-{
-    int width, height, nrChannels;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // load image, create texture and generate mipmaps
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
-
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
 }
 
 
