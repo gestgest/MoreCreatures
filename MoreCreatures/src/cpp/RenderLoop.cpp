@@ -52,6 +52,8 @@ static Shader* debugLineShader = nullptr;
 static unsigned int debugLineVAO = 0;
 static unsigned int debugLineVBO = 0;
 
+
+//그리는 범위를 선으로 표시하는 디버깅 함수
 void RenderShadowFrustumDebug()
 {
     // 라이트 NDC 큐브의 8개 코너 (라이트 클립공간)
@@ -188,20 +190,23 @@ void UpdatePhysics(float dt)
 //      커졌다 작아졌다 하지 않음. → 약간 손해보더라도 frustum보다 넉넉히 잡는다.
 //   2) 박스 위치를 "그림자맵 텍셀 한 칸 단위"로 스냅. 그래야 카메라가 살짝 움직여도
 //      같은 월드 좌표가 같은 텍셀에 떨어져, 그림자 가장자리가 일렁(swimming)이지 않음.
-//
+// 
+
+
 // 결과: 그림자 자체는 월드에 박혀 있고, 단지 "어느 영역을 그릴지"만 카메라를 따라다님.
 
 // 카메라 범위만큼만 그림자 계산 => 최적화를 위한 기술
 static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lightDir,
                                          float radius, unsigned int shadowMapSize)
 {
-    glm::vec3 L = glm::normalize(lightDir);
+    //light의 노멀벡터
+    glm::vec3 normal_light = glm::normalize(lightDir);
 
     // (A) 박스 중심: 카메라 앞쪽으로 radius만큼 떨어진 지점 (그래야 시야 안에 그림자가 다 들어감)
     glm::vec3 center = cam.Position + cam.Front * radius;
 
     // (B) 라이트 view 행렬 만들기
-    glm::mat4 lightView = glm::lookAt(center - L, center, glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 lightView = glm::lookAt(center - normal_light, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // (C) 텍셀 스냅: 박스 중심을 그림자맵 텍셀 격자에 맞춤
     //   - 라이트 공간에서 텍셀 한 칸의 월드 크기 = (2 * radius) / shadowMapSize
@@ -213,7 +218,7 @@ static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lig
     glm::vec3 snappedCenter = glm::vec3(glm::inverse(lightView) * centerLS);
 
     // 스냅된 중심으로 lightView 다시 만들기
-    lightView = glm::lookAt(snappedCenter - L, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+    lightView = glm::lookAt(snappedCenter - normal_light, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // (D) ortho는 항상 같은 크기 (-radius ~ +radius)
     //   z 범위는 그림자 캐스터가 박스 뒤쪽에 있어도 잡히도록 넉넉하게
