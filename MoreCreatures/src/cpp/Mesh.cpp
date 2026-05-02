@@ -177,6 +177,44 @@ void Mesh::setupWithTexcoords(const float* vertices, int byteSize, int nVertices
     vertexCount = nVertices;
 }
 
+void Mesh::setupWithColors(const float* vertices, int byteSize, int nVertices)
+{
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, byteSize, vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    vertexCount = nVertices;
+}
+
+void Mesh::updateUniformsWithYaw(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 position,
+    float yaw, glm::vec3 mini_scale)
+{
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera.GetViewMatrix();
+
+    shader->setMat4("projection", projection);
+    shader->setMat4("view", view);
+
+    shader->setVec3("lightColor", lightColor);
+    shader->setVec3("lightPos", lightPos);
+    shader->setVec3("viewPos", camera.Position);
+
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, mini_scale);
+    shader->setMat4("model", model);
+}
+
 
 unsigned int& Mesh::getVAO()
 {

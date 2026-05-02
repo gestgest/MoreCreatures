@@ -1,12 +1,12 @@
 #version 330 core
 out vec4 fragColor; //색
 
-in vec3 Normal;  
+in vec3 Normal;
 in vec3 FragPos;
-in vec4 fragPosLightSpace; 
- 
+in vec3 VertColor; //다양한 색
+in vec4 fragPosLightSpace;
+
 uniform vec3 lightColor;
-uniform vec3 objectColor; //오브젝트 색
 
 uniform vec3 lightPos; 
 uniform vec3 viewPos; 
@@ -80,7 +80,7 @@ void main()
     // [수정] 조명 결과에 그림자(shadow)를 적용합니다.
     // (1.0 - shadow)를 곱해주어 그림자가 진 곳은 diffuse와 specular가 0이 되어 어두워지게 만듭니다.
     // ambient(환경광)는 그림자 속에서도 희미하게 보여야 하므로 그림자 값을 곱하지 않습니다.
-    vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * objectColor;
+    vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * VertColor;
     
     fragColor = vec4(result, 1.0);
 }

@@ -42,6 +42,13 @@ public:
     //텍스처 좌표 포함 (pos3 + normal3 + tex2 = 8 floats per vertex)
     void setupWithTexcoords(const float* vertices, int byteSize, int nVertices);
 
+    //정점 색상 포함 (pos3 + normal3 + color3 = 9 floats per vertex)
+    void setupWithColors(const float* vertices, int byteSize, int nVertices);
+
+    //yaw 회전(Y축) 포함 모델 매트릭스 적용
+    void updateUniformsWithYaw(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 position,
+        float yaw, glm::vec3 mini_scale = glm::vec3(1, 1, 1));
+
     // property
 
     unsigned int& getVAO();

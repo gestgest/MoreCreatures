@@ -1,5 +1,12 @@
 #include <GameObject/Mouse.h>
 
+#include <Loader/Loader.h>
+#include <vector>
+#include <iostream>
+#include <cmath>
+
+#include <glad/glad.h>
+
 
 Mouse::Mouse()
 {
@@ -27,8 +34,20 @@ void Mouse::init(Shader* shaderPtr, glm::vec3 color)
 
     if (shaderPtr)
     {
+        //쥐 obj 가져와라
         Mesh* m = new Mesh(*shaderPtr, color);
-        m->setupAsSphere();
+
+        std::vector<float> verts;
+        int nVerts = 0;
+        if (Loader::loadModel("obj/rat.obj", verts, nVerts))
+        {
+            m->setupWithColors(verts.data(), (int)(verts.size() * sizeof(float)), nVerts);
+        }
+        else
+        {
+            std::cout << "Mouse: rat.obj load failed, falling back to sphere" << std::endl;
+            m->setupAsSphere();
+        }
         setMesh(m);
     }
 }
@@ -46,25 +65,17 @@ void Mouse::drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 light
     glm::vec3 color = mesh->getColor();
 
     shader->use();
-    //fs
-    // light properties
-    shader->setVec3("objectColor", color);
     shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, mesh->getShadowMap());
     shader->setInt("shadowMap", 1); // "셰이더야, 그림자는 1번에서 읽어와!"
 
+    // front 방향(XZ평면)으로 yaw 회전
+    float yaw = atan2f(front.x, front.z);
+
     mesh->Bind();
-
-    //몸통 (바닥에서 -0.5 위쪽)
-    mesh->updateUniforms(camera, lightColor, lightPos, color,
-        position + glm::vec3(0.0f, -0.5f, 0.0f), glm::vec3(1.0f));
-    mesh->Draw();
-
-    //머리 (몸통 + front 방향으로 1.5만큼, 0.75배 크기)
-    mesh->updateUniforms(camera, lightColor, lightPos, color,
-        position + glm::vec3(0.0f, -0.5f, 0.0f) + front * 1.5f, glm::vec3(0.75f));
+    mesh->updateUniformsWithYaw(camera, lightColor, lightPos, color, position, yaw, scale);
     mesh->Draw();
 }
 
@@ -72,28 +83,17 @@ void Mouse::drawShadow(Shader& shader)
 {
     if (!mesh) return;
 
-    // 1. 구체 메쉬(VAO) 바인드
     glBindVertexArray(mesh->getVAO());
     int nVert = mesh->getVertexCount();
 
-    // ==========================================
-    // 2. 몸통(Body)의 위치 행렬 및 그리기
-    // ==========================================
-    glm::mat4 bodyModel = glm::mat4(1.0f);
-    bodyModel = glm::translate(bodyModel, position + glm::vec3(0.0f, -0.5f, 0.0f));
+    float yaw = atan2f(front.x, front.z);
 
-    shader.setMat4("model", bodyModel);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, scale);
 
-    glDrawArrays(GL_TRIANGLES, 0, nVert);
-
-    // ==========================================
-    // 3. 머리(Head)의 위치 행렬 및 그리기
-    // ==========================================
-    glm::mat4 headModel = glm::mat4(1.0f);
-    headModel = glm::translate(headModel, position + glm::vec3(0.0f, -0.5f, 0.0f) + front * 1.5f);
-    headModel = glm::scale(headModel, glm::vec3(0.75f, 0.75f, 0.75f));
-
-    shader.setMat4("model", headModel);
+    shader.setMat4("model", model);
 
     glDrawArrays(GL_TRIANGLES, 0, nVert);
 }
