@@ -6,9 +6,6 @@ in vec3 FragPos;
 in vec2 TexCoord;
 in vec4 FragPosLightSpace;
 
-// texture samplers => 
-//shader.setInt�� ����, glActiveTexture(GL_TEXTURE0);�� ����
-//���� ��� setInt0�̸� glActiveTexture�� 0�� �����϶�� ��
 uniform sampler2D texture1;
 uniform sampler2D shadowMap;
 //uniform sampler2D normalMap;
@@ -27,7 +24,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; //=> �׸������� g��? z��?
+    float closestDepth = texture(shadowMap, projCoords.xy).r; //=>
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);  
 
     float shadow = 0.0; 
@@ -51,8 +48,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
         shadow = 0.0;
 
     // check whether current frag pos is in shadow
-
-    //�̰� �Ƹ� pcf��?
+    
     return shadow;
 }
 
@@ -60,7 +56,7 @@ void main()
 {
     vec3 color = texture(texture1, TexCoord).rgb;
     // ambient
-    float ambientStrength = 0.3; //�󸶳� ������
+    float ambientStrength = 0.3; 
     vec3 ambient = ambientStrength * lightColor;
   	
     // diffuse
@@ -79,8 +75,8 @@ void main()
     vec3 specular = specularStrength * spec * lightColor;  
         
     // calculate shadow
-    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);                     //�����찡 ���� 1, �� ���� 0
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;     //���⸸ �ٸ���
+    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);        
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color; 
     
     FragColor = vec4(lighting, 1.0);
     //FragColor = vec4(1.0, 0.0, 0.0, 1.0);

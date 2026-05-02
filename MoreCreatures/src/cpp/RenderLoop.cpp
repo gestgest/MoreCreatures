@@ -11,6 +11,8 @@
 #include <Config.h>
 
 #include <vector>
+#include <algorithm>
+#include <cfloat>
 #include <glm/gtc/matrix_transform.hpp>
 
 extern Camera camera;
@@ -180,13 +182,57 @@ void UpdatePhysics(float dt)
     }
 }
 
+// "Stable Shadow Map" 기법.
+// 핵심 아이디어 두 가지:
+//   1) 박스 크기는 항상 고정 (radius * 2). 그래야 카메라가 회전/줌해도 그림자가
+//      커졌다 작아졌다 하지 않음. → 약간 손해보더라도 frustum보다 넉넉히 잡는다.
+//   2) 박스 위치를 "그림자맵 텍셀 한 칸 단위"로 스냅. 그래야 카메라가 살짝 움직여도
+//      같은 월드 좌표가 같은 텍셀에 떨어져, 그림자 가장자리가 일렁(swimming)이지 않음.
+//
+// 결과: 그림자 자체는 월드에 박혀 있고, 단지 "어느 영역을 그릴지"만 카메라를 따라다님.
+
+// 카메라 범위만큼만 그림자 계산 => 최적화를 위한 기술
+static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lightDir,
+                                         float radius, unsigned int shadowMapSize)
+{
+    glm::vec3 L = glm::normalize(lightDir);
+
+    // (A) 박스 중심: 카메라 앞쪽으로 radius만큼 떨어진 지점 (그래야 시야 안에 그림자가 다 들어감)
+    glm::vec3 center = cam.Position + cam.Front * radius;
+
+    // (B) 라이트 view 행렬 만들기
+    glm::mat4 lightView = glm::lookAt(center - L, center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // (C) 텍셀 스냅: 박스 중심을 그림자맵 텍셀 격자에 맞춤
+    //   - 라이트 공간에서 텍셀 한 칸의 월드 크기 = (2 * radius) / shadowMapSize
+    //   - 중심을 라이트 공간으로 옮긴 뒤, 그 좌표를 텍셀 단위로 floor → 다시 월드로
+    float worldUnitsPerTexel = (2.0f * radius) / (float)shadowMapSize;
+    glm::vec4 centerLS = lightView * glm::vec4(center, 1.0f);
+    centerLS.x = std::floor(centerLS.x / worldUnitsPerTexel) * worldUnitsPerTexel;
+    centerLS.y = std::floor(centerLS.y / worldUnitsPerTexel) * worldUnitsPerTexel;
+    glm::vec3 snappedCenter = glm::vec3(glm::inverse(lightView) * centerLS);
+
+    // 스냅된 중심으로 lightView 다시 만들기
+    lightView = glm::lookAt(snappedCenter - L, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // (D) ortho는 항상 같은 크기 (-radius ~ +radius)
+    //   z 범위는 그림자 캐스터가 박스 뒤쪽에 있어도 잡히도록 넉넉하게
+    constexpr float zRange = 100.0f;
+    glm::mat4 lightProjection = glm::ortho(-radius, radius, -radius, radius, -zRange, zRange);
+
+    return lightProjection * lightView;
+}
+
 void RenderShadowPass()
 {
-    // shadow projection 계산
-    float near_plane = 1.0f, far_plane = 12.5f;
-    glm::mat4 lightProjection = glm::ortho(-30.0f, 30.0f, -30.0f, 30.0f, near_plane, far_plane);
-    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //start, end, 위 벡터 : end 아무거나 해도 다 알아서 기울기 계산해준다.
-    lightSpaceMatrix = lightProjection * lightView;
+    // 라이트는 방향광으로 가정. lightPos는 "방향"의 출발점이라 보고 정규화해서 사용
+    glm::vec3 lightDir = -glm::normalize(lightPos); // 라이트가 향하는 방향
+
+    // radius: 카메라 주변 그림자 영역의 반지름. "약간 큰 사각형" 정도가 25~30
+    // shadowMapSize: depthMap 텍스처 해상도 (depthProcessing에서 SCR_WIDTH로 만들었음)
+
+    //camera, 빛 방향, 반지름, SCR_WIDTH
+    lightSpaceMatrix = ComputeLightSpaceMatrix(camera, lightDir, 30.0f, SCR_WIDTH);
 
     depthShader->use();
     depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
