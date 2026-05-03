@@ -19,13 +19,15 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    // transform to range
+    // transform to range : -1 ~ 1 를 0 ~ 1로 전환
     projCoords = projCoords * 0.5 + 0.5;
     
     // get depth of current fragment from light's perspective
-    float currentDepth = projCoords.z;
-    // get closest depth value from light's perspective (using range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    float currentDepth = projCoords.z; //그림자 깊이
+    
+    //이거 pcf를 쓴다면 안 쓰인다.
+    //float closestDepth = texture(shadowMap, projCoords.xy).r; 
+
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005) * 10;  
 
     float shadow = 0.0; 
@@ -36,7 +38,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
