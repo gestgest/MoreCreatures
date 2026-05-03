@@ -1,6 +1,7 @@
 #include <GameObject/Mouse.h>
 
 #include <Loader/Loader.h>
+#include <Component/BoxCollider.h>
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -31,6 +32,12 @@ void Mouse::init(Shader* shaderPtr, glm::vec3 color)
     movement_speed = 10.0f;
     isStatic = false;
     isActive = true;
+
+    //rat.obj 발 obj y≈0, 머리 y≈1.75 → position을 발 기준으로 보고
+    //collider는 발 위로 0.9 띄운 곳을 중심, 크기 (0.6, 1.8, 1.2)
+    BoxCollider* col = new BoxCollider(this, glm::vec3(0.6f, 1.8f, 1.2f));
+    col->setCenter(glm::vec3(0.0f, 0.9f, 0.0f));
+    setCollider(col);
 
     if (shaderPtr)
     {

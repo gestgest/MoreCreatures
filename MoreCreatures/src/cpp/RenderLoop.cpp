@@ -8,6 +8,8 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Mouse.h>
 
+#include <Component/Collider.h>
+
 #include <Config.h>
 
 #include <vector>
@@ -170,8 +172,12 @@ void UpdatePhysics(float dt)
                 continue;
             }
 
+            Collider* a = objects[i]->getCollider();
+            Collider* b = objects[j]->getCollider();
+            if (!a || !b) continue;
+
             //물체가 닿았는지
-            if (objects[i]->isCollisionEnter(objects[j]))
+            if (a->overlaps(b))
             {
                 objects[i]->addRepulsion(dt);
                 objects[j]->addRepulsion(dt);

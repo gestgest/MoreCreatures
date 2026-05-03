@@ -136,6 +136,7 @@
     <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
     <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
     <ClCompile Include="src\cpp\Loader\Loader.cpp" />
+    <ClCompile Include="src\cpp\BoxCollider.cpp" />
     <ClCompile Include="src\cpp\Mesh.cpp" />
     <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
@@ -146,6 +147,8 @@
   <ItemGroup>
     <ClInclude Include="..\include\header\camera.h" />
     <ClInclude Include="..\include\header\shader.h" />
+    <ClInclude Include="src\header\Component\BoxCollider.h" />
+    <ClInclude Include="src\header\Component\Collider.h" />
     <ClInclude Include="src\header\Component\Component.h" />
     <ClInclude Include="src\header\Component\Mesh.h" />
     <ClInclude Include="src\header\Config.h" />

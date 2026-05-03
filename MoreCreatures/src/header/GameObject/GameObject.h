@@ -5,12 +5,13 @@
 #include <header/camera.h>
 #include <Config.h>
 #include <Component/Mesh.h>
+#include <Component/Collider.h>
 #include <glad/glad.h>
 
 
 class GameObject {
 protected:
-    glm::vec3 scale; //물리 scale
+    glm::vec3 scale; //비주얼 scale
     glm::vec3 position;
     glm::vec3 velocity;
 
@@ -20,6 +21,7 @@ protected:
     bool isActive = true;
 
     Mesh* mesh = nullptr;
+    Collider* collider = nullptr;
 
 
     void move(glm::vec3 velocity, float deltaTime);
@@ -27,10 +29,13 @@ protected:
 
 public:
     GameObject();
-    virtual ~GameObject() = default;
+    virtual ~GameObject();
 
     void setMesh(Mesh* m);
     Mesh* getMesh();
+
+    void setCollider(Collider* c);
+    Collider* getCollider();
 
 
     //기본 구현: mesh가 있으면 그걸로 그림. 서브클래스가 override 가능
@@ -41,8 +46,6 @@ public:
 
     glm::vec3 getPosition();
 
-
-    bool isCollisionEnter(GameObject* object);
 
     //반발력 추가
     void addRepulsion(float deltaTime);
@@ -57,8 +60,6 @@ public:
 
     void setIsActive(bool isActive);
     bool getIsActive();
-
-    bool isInBoundary(float a, float b, float a_size, float b_size);
 };
 
 #endif
