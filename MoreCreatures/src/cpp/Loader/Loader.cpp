@@ -37,11 +37,14 @@ bool Loader::loadTexture(unsigned int& texture, const std::string& path)
 }
 
 
+//obj 변환기
 bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices, int& outVertexCount)
 {
+    //설정
     tinyobj::ObjReaderConfig config;
     config.triangulate = true;
 
+    //읽기
     tinyobj::ObjReader reader;
     if (!reader.ParseFromFile(path, config))
     {
@@ -54,8 +57,9 @@ bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices,
     if (!reader.Warning().empty())
         std::cout << "OBJ warning: " << reader.Warning() << std::endl;
 
+    //속성
     const tinyobj::attrib_t& attrib = reader.GetAttrib();
-    const auto& shapes = reader.GetShapes();
+    const auto& shapes = reader.GetShapes(); 
     const auto& materials = reader.GetMaterials();
 
     outVertices.clear();
@@ -63,16 +67,19 @@ bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices,
 
     for (const auto& shape : shapes)
     {
-        const auto& mesh = shape.mesh;
+        const auto& mesh = shape.mesh; //tinyobj::mesh_t
         size_t indexOffset = 0;
 
         // 면 단위로 순회 (각 면 = 3 vertex, triangulate=true)
+        // 대체로 mesh.num_face_vertices.size() 갯수는 12988 정도 됨
         for (size_t f = 0; f < mesh.num_face_vertices.size(); ++f)
         {
             int matId = (f < mesh.material_ids.size()) ? mesh.material_ids[f] : -1;
 
-            // 머티리얼의 diffuse 색상 (없으면 흰색)
+            // 머티리얼의 diffuse 색상 (default : 흰색)
             float r = 1.0f, g = 1.0f, b = 1.0f;
+
+            //rgb 가져오는 함수
             if (matId >= 0 && matId < (int)materials.size())
             {
                 r = materials[matId].diffuse[0];
@@ -80,27 +87,31 @@ bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices,
                 b = materials[matId].diffuse[2];
             }
 
+
+            //vertex 3
             for (size_t v = 0; v < 3; ++v)
             {
-                const tinyobj::index_t& idx = mesh.indices[indexOffset + v];
+                const tinyobj::index_t& idx = mesh.indices[indexOffset + v]; //인덱스 버퍼
 
-                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 0]);
-                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 1]);
-                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 2]);
+                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 0]); //x
+                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 1]); //y
+                outVertices.push_back(attrib.vertices[3 * idx.vertex_index + 2]); //z
 
+                //normal 값이 있다면 normal
                 if (idx.normal_index >= 0)
                 {
                     outVertices.push_back(attrib.normals[3 * idx.normal_index + 0]);
                     outVertices.push_back(attrib.normals[3 * idx.normal_index + 1]);
                     outVertices.push_back(attrib.normals[3 * idx.normal_index + 2]);
                 }
-                else
+                else //default : normal 기본 위쪽 방향
                 {
                     outVertices.push_back(0.0f);
                     outVertices.push_back(1.0f);
                     outVertices.push_back(0.0f);
                 }
 
+                //색 주입
                 outVertices.push_back(r);
                 outVertices.push_back(g);
                 outVertices.push_back(b);
