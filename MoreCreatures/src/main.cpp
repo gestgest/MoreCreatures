@@ -5,6 +5,7 @@
 #include <header/shader.h>
 
 #include <GameObject/Ground.h>
+#include <GameObject/Terrain.h>
 #include <GameObject/Mouse.h>
 
 #include <Loader/Loader.h>
@@ -41,6 +42,7 @@ std::vector<GameObject*> objects;
 
 GLFWwindow* window = nullptr;
 Ground* ground = nullptr;
+Terrain* terrain = nullptr;
 Shader* depthShader = nullptr;
 unsigned int depthMapFBO = 0;
 unsigned int depthMap = 0;
@@ -101,7 +103,7 @@ int main()
     Shader groundShader("src/vs/ground.vs", "src/fs/ground.fs");
     depthShader = new Shader("src/vs/DepthShader.vs", "src/fs/DepthShader.fs");
 
-    ground = new Ground(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
+    terrain = new Terrain(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
     Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5882353, 0.2941176, 0.0));
 
     unsigned int ground_texture;
@@ -110,17 +112,17 @@ int main()
     Loader::loadTexture(ground_texture, "textures/snow.png");
     Loader::loadTexture(normalMap, "textures/snow_normal.png");
 
-    
+
     //shadow map
     depthProcessing(depthMapFBO, depthMap);
 
-    ground->setTexture(ground_texture);
+    terrain->setTexture(ground_texture);
 
-    objects.push_back(ground);
+    objects.push_back(terrain);
     objects.push_back(mouse);
 
     mouse->setShadowMap(depthMap);
-    ground->setShadowMap(depthMap);
+    terrain->setShadowMap(depthMap);
 
     // render loop
     // -----------

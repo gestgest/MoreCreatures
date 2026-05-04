@@ -6,6 +6,7 @@
 
 #include <GameObject/GameObject.h>
 #include <GameObject/Ground.h>
+#include <GameObject/Terrain.h>
 #include <GameObject/Mouse.h>
 
 #include <Component/Collider.h>
@@ -26,6 +27,7 @@ extern std::vector<GameObject*> objects;
 
 extern GLFWwindow* window;
 extern Ground* ground;
+extern Terrain* terrain;
 extern Shader* depthShader;
 extern unsigned int depthMapFBO;
 extern unsigned int depthMap;
@@ -252,7 +254,7 @@ void RenderShadowPass()
     glClear(GL_DEPTH_BUFFER_BIT); // 도화지 초기화
 
     player->drawShadow(*depthShader);
-    ground->drawShadow(*depthShader);
+    terrain->drawShadow(*depthShader);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 찰칵! 끝났으니 다시 모니터 화면으로 복귀
 }

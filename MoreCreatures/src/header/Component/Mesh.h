@@ -16,11 +16,13 @@ protected:
 
     unsigned int vao = 0;
     unsigned int vbo = 0;
+    unsigned int ebo = 0;
     Shader* shader;
 
     int nSphereVert = 0;
     int nSphereAttr = 0;
     int vertexCount = 0; //Draw에서 사용할 정점 개수
+    int indexCount = 0;  //indexed draw에서 사용할 인덱스 개수 (0이면 glDrawArrays 사용)
 
     glm::vec3 color;
 
@@ -45,6 +47,10 @@ public:
     //정점 색상 포함 (pos3 + normal3 + color3 = 9 floats per vertex)
     void setupWithColors(const float* vertices, int byteSize, int nVertices);
 
+    //지형용: 텍스처 좌표 + 인덱스 버퍼 (pos3 + normal3 + tex2 = 8 floats per vertex)
+    void setupIndexedTexcoords(const float* vertices, int vertByteSize,
+                               const unsigned int* indices, int nIndices);
+
     //yaw 회전(Y축) 포함 모델 매트릭스 적용
     void updateUniformsWithYaw(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::vec3 color, glm::vec3 position,
         float yaw, glm::vec3 mini_scale = glm::vec3(1, 1, 1));
@@ -57,6 +63,8 @@ public:
     glm::vec3 getColor();
     unsigned int getShadowMap();
     int getVertexCount();
+    int getIndexCount();
+    unsigned int getEBO();
 
     void setShader(Shader& shader);
     void setShadowMap(unsigned int& shadowMap);

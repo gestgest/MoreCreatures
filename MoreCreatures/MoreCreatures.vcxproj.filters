@@ -63,6 +63,9 @@
     <ClCompile Include="src\cpp\GameObject\Ground.cpp">
       <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
+    <ClCompile Include="src\cpp\GameObject\Terrain.cpp">
+      <Filter>소스 파일\cpp\GameObject</Filter>
+    </ClCompile>
     <ClCompile Include="src\cpp\Mesh.cpp">
       <Filter>소스 파일\cpp</Filter>
     </ClCompile>
@@ -81,6 +84,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="src\header\GameObject\Ground.h">
+      <Filter>헤더 파일\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\GameObject\Terrain.h">
       <Filter>헤더 파일\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="src\header\GameObject\GameObject.h">

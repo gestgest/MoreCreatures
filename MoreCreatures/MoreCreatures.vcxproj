@@ -135,6 +135,7 @@
     <ClCompile Include="src\cpp\GameObject\Creature.cpp" />
     <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
     <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
+    <ClCompile Include="src\cpp\GameObject\Terrain.cpp" />
     <ClCompile Include="src\cpp\Loader\Loader.cpp" />
     <ClCompile Include="src\cpp\BoxCollider.cpp" />
     <ClCompile Include="src\cpp\Mesh.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="src\header\GameObject\Creature.h" />
     <ClInclude Include="src\header\GameObject\GameObject.h" />
     <ClInclude Include="src\header\GameObject\Ground.h" />
+    <ClInclude Include="src\header\GameObject\Terrain.h" />
     <ClInclude Include="src\header\GameObject\Mouse.h" />
     <ClInclude Include="src\header\GameObject\Player.h" />
   </ItemGroup>

@@ -105,6 +105,7 @@ Mesh::~Mesh()
 {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
+    if (ebo) glDeleteBuffers(1, &ebo);
 }
 
 
@@ -113,7 +114,6 @@ void Mesh::updateUniforms(Camera& camera, glm::vec3 lightColor, glm::vec3 lightP
 {
     //
     //fs   drawObject
-    //엄준식
     // view/projection transformations
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f); //
     //glm::mat4 view = glm::lookAt(camera.Position, glm::vec3(0.0f, 0.0f, 0.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -175,6 +175,31 @@ void Mesh::setupWithTexcoords(const float* vertices, int byteSize, int nVertices
     glEnableVertexAttribArray(2);
 
     vertexCount = nVertices;
+}
+
+void Mesh::setupIndexedTexcoords(const float* vertices, int vertByteSize,
+                                 const unsigned int* indices, int nIndices)
+{
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
+
+    glBindVertexArray(vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertByteSize, vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    indexCount = nIndices;
 }
 
 void Mesh::setupWithColors(const float* vertices, int byteSize, int nVertices)
@@ -245,6 +270,14 @@ int Mesh::getVertexCount()
 {
     return vertexCount;
 }
+int Mesh::getIndexCount()
+{
+    return indexCount;
+}
+unsigned int Mesh::getEBO()
+{
+    return ebo;
+}
 
 void Mesh::setShader(Shader& shader)
 {
@@ -262,5 +295,8 @@ void Mesh::Bind()
 
 void Mesh::Draw()
 {
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    if (indexCount > 0)
+        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+    else
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
