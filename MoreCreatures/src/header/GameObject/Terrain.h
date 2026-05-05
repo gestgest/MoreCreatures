@@ -6,6 +6,7 @@
 class Terrain : public GameObject {
 
     unsigned int* texture = nullptr;
+    unsigned int* normalMap = nullptr;
 
     int gridSize = 128;       // NxN cells (정점은 (N+1)x(N+1))
     float cellSize = 1.0f;    // 한 칸당 월드 단위
@@ -22,6 +23,7 @@ public:
     void initObject(Shader* shaderPtr, glm::vec3 color);
 
     void setTexture(unsigned int& texture);
+    void setNormalMap(unsigned int& normalMap);
     void setShadowMap(unsigned int& shadowMap);
 
     void drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lightPos, glm::mat4 lightSpaceMatrix) override;

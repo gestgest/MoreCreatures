@@ -154,26 +154,45 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     }
     for (auto& n : normals) n = glm::normalize(n);
 
-    //3) 정점 데이터 패킹: pos3 + normal3 + tex2 = 8 floats
+    //2-1) 정점 tangent 계산 — UV가 월드 (x,z)에 정렬되어 있으므로
+    //     U 방향 월드 벡터(1,0,0)을 표면 평면에 그람-슈미트 사영해서 tangent를 얻는다.
+    //     B(bitangent)는 셰이더에서 cross(N, T)로 재구성.
+    std::vector<glm::vec3> tangents(totalVerts);
+    for (int i = 0; i < totalVerts; ++i)
+    {
+        const glm::vec3& N = normals[i];
+        glm::vec3 T = glm::vec3(1.0f, 0.0f, 0.0f);
+        T = T - glm::dot(T, N) * N;
+        float len2 = glm::dot(T, T);
+        tangents[i] = (len2 > 1e-8f) ? T * (1.0f / sqrtf(len2)) : glm::vec3(1.0f, 0.0f, 0.0f);
+    }
+
+    //3) 정점 데이터 패킹: pos3 + normal3 + tex2 + tangent3 = 11 floats
     std::vector<float> vertexData;
-    vertexData.reserve(totalVerts * 8);
+    vertexData.reserve(totalVerts * 11);
     for (int z = 0; z <= n; ++z)
     {
         for (int x = 0; x <= n; ++x)
         {
             int i = z * vertsPerSide + x;
             const glm::vec3& p = positions[i];
-            const glm::vec3& n = normals[i];
+            const glm::vec3& nrm = normals[i];
+            const glm::vec3& t = tangents[i];
 
             vertexData.push_back(p.x);
             vertexData.push_back(p.y);
             vertexData.push_back(p.z);
-            vertexData.push_back(n.x);
-            vertexData.push_back(n.y);
-            vertexData.push_back(n.z);
-            //텍스처 타일링: 한 셀당 1 UV — 텍스처가 셀마다 반복됨
-            vertexData.push_back((float)x);
-            vertexData.push_back((float)z);
+            vertexData.push_back(nrm.x);
+            vertexData.push_back(nrm.y);
+            vertexData.push_back(nrm.z);
+            //텍스처 타일링: 4셀당 1 UV — 너무 잦은 반복으로 인한 자글거림(aliasing) 방지
+            const float uvScale = 0.25f;
+            vertexData.push_back((float)x * uvScale);
+            vertexData.push_back((float)z * uvScale);
+            //tangent (월드 공간)
+            vertexData.push_back(t.x);
+            vertexData.push_back(t.y);
+            vertexData.push_back(t.z);
         }
     }
 
@@ -216,6 +235,11 @@ void Terrain::setTexture(unsigned int& texture)
     this->texture = &texture;
 }
 
+void Terrain::setNormalMap(unsigned int& normalMap)
+{
+    this->normalMap = &normalMap;
+}
+
 void Terrain::setShadowMap(unsigned int& shadowMap)
 {
     if (mesh) mesh->setShadowMap(shadowMap);
@@ -233,10 +257,15 @@ void Terrain::drawGameObject(Camera& camera, glm::vec3 lightColor, glm::vec3 lig
 
     glActiveTexture(GL_TEXTURE0);
     if (texture) glBindTexture(GL_TEXTURE_2D, *texture);
+    shader->setInt("texture1", 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, mesh->getShadowMap());
     shader->setInt("shadowMap", 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    if (normalMap) glBindTexture(GL_TEXTURE_2D, *normalMap);
+    shader->setInt("normalMap", 2);
 
     mesh->updateUniforms(camera, lightColor, lightPos, color, position, glm::vec3(1.0f));
     mesh->Bind();

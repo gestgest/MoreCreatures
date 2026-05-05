@@ -7,6 +7,7 @@
 #include <header/tiny_obj_loader.h>
 
 #include <iostream>
+#include <cstring>
 
 
 bool Loader::loadTexture(unsigned int& texture, const std::string& path)
@@ -18,8 +19,25 @@ bool Loader::loadTexture(unsigned int& texture, const std::string& path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //트라이리니어 + (가능 시) anisotropic filtering — 멀리서의 자글거림 제거
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    //anisotropic filtering — GL 확장이 있을 때만 사용
+    #ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+    #define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+    #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+    #endif
+    {
+        const char* exts = (const char*)glGetString(GL_EXTENSIONS);
+        if (exts && strstr(exts, "GL_EXT_texture_filter_anisotropic"))
+        {
+            GLfloat maxAniso = 1.0f;
+            glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+            GLfloat aniso = maxAniso < 16.0f ? maxAniso : 16.0f;
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+        }
+    }
 
     stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);

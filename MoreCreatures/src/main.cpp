@@ -117,6 +117,7 @@ int main()
     depthProcessing(depthMapFBO, depthMap);
 
     terrain->setTexture(ground_texture);
+    terrain->setNormalMap(normalMap);
 
     objects.push_back(terrain);
     objects.push_back(mouse);
