@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 #include <glad/glad.h>
 
@@ -33,12 +34,6 @@ void Mouse::init(Shader* shaderPtr, glm::vec3 color)
     isStatic = false;
     isActive = true;
 
-    //rat.obj 발 obj y≈0, 머리 y≈1.75 → position을 발 기준으로 보고
-    //collider는 발 위로 0.9 띄운 곳을 중심, 크기 (0.6, 1.8, 1.2)
-    BoxCollider* col = new BoxCollider(this, glm::vec3(0.6f, 1.8f, 1.2f));
-    col->setCenter(glm::vec3(0.0f, 0.9f, 0.0f));
-    setCollider(col);
-
     if (shaderPtr)
     {
         //쥐 obj 가져와라
@@ -46,16 +41,66 @@ void Mouse::init(Shader* shaderPtr, glm::vec3 color)
 
         std::vector<float> verts;
         int nVerts = 0;
-        if (Loader::loadModel("obj/rat.obj", verts, nVerts))
+        bool loaded = Loader::loadModel("obj/rat.obj", verts, nVerts);
+        if (loaded)
         {
             m->setupWithColors(verts.data(), (int)(verts.size() * sizeof(float)), nVerts);
+
+            //로드된 메시의 실제 AABB로 콜라이더를 맞춘다.
+            //(obj 원점이 발이든 중심이든 자동으로 정확히 둘러싸짐)
+            //포맷: pos3 + normal3 + color3 = 9 floats / vertex
+            const int stride = 9;
+            float minX =  std::numeric_limits<float>::infinity();
+            float minY =  std::numeric_limits<float>::infinity();
+            float minZ =  std::numeric_limits<float>::infinity();
+            float maxX = -std::numeric_limits<float>::infinity();
+            float maxY = -std::numeric_limits<float>::infinity();
+            float maxZ = -std::numeric_limits<float>::infinity();
+            for (int i = 0; i < nVerts; ++i)
+            {
+                float x = verts[i * stride + 0];
+                float y = verts[i * stride + 1];
+                float z = verts[i * stride + 2];
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+                if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+            }
+
+            glm::vec3 size  (maxX - minX, maxY - minY, maxZ - minZ);
+            glm::vec3 center((maxX + minX) * 0.5f,
+                             (maxY + minY) * 0.5f,
+                             (maxZ + minZ) * 0.5f);
+
+            //scale 적용 (현재 (1,1,1)이지만 향후 변경 대비)
+            size   *= scale;
+            center *= scale;
+
+            BoxCollider* col = new BoxCollider(this, size);
+            col->setCenter(center);
+            setCollider(col);
+
+            std::cout << "Mouse collider: size=("
+                      << size.x << "," << size.y << "," << size.z << ") center=("
+                      << center.x << "," << center.y << "," << center.z << ")" << std::endl;
         }
         else
         {
             std::cout << "Mouse: rat.obj load failed, falling back to sphere" << std::endl;
             m->setupAsSphere();
+
+            //fallback 콜라이더: 단위 구체 정도
+            BoxCollider* col = new BoxCollider(this, glm::vec3(1.0f, 1.0f, 1.0f));
+            col->setCenter(glm::vec3(0.0f, 0.0f, 0.0f));
+            setCollider(col);
         }
         setMesh(m);
+    }
+    else
+    {
+        //쉐이더 없는 경로(테스트용): 안전한 기본 콜라이더
+        BoxCollider* col = new BoxCollider(this, glm::vec3(0.6f, 1.8f, 1.2f));
+        col->setCenter(glm::vec3(0.0f, 0.9f, 0.0f));
+        setCollider(col);
     }
 }
 

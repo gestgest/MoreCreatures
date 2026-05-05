@@ -1,6 +1,6 @@
 #include <GameObject/Terrain.h>
 
-#include <Component/BoxCollider.h>
+#include <Component/TerrainCollider.h>
 
 #include <vector>
 #include <cmath>
@@ -93,13 +93,16 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     isStatic = true;
     isActive = true;
 
-    //임시 충돌체: 지형의 평균 높이쯤에 평평한 floor.
-    //정확한 지형 충돌은 추후 getHeightAt 기반으로 별도 구현.
+    //heightfield 충돌체: 노이즈로 만든 실제 지형 표면을 따라 충돌 판정.
+    //지형 메시는 x,z 모두 [-half, +half] 범위, y는 [0, heightScale] 범위에 존재.
     float worldExtent = gridSize * cellSize; // 전체 가로/세로 크기
-    
-    //collider 설정
-    BoxCollider* col = new BoxCollider(this, glm::vec3(worldExtent, 1.0f, worldExtent));
-    col->setCenter(glm::vec3(0.0f, -0.5f, 0.0f)); // 윗면이 y=0에 오도록
+    float half = worldExtent * 0.5f;
+
+    //지형 코스 AABB — Y 하한은 박스가 깊이 박혀도 reject 안 되도록 충분히 낮게
+    glm::vec3 localMin(-half, -1e6f, -half);
+    glm::vec3 localMax( half, heightScale, half);
+
+    TerrainCollider* col = new TerrainCollider(this, this, localMin, localMax, /*samplesPerSide=*/3);
     setCollider(col);
 
     const int n = gridSize; //128 => 격자라고 한다면

@@ -132,13 +132,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\cpp\Component\BoxCollider.cpp" />
+    <ClCompile Include="src\cpp\Component\Mesh.cpp" />
+    <ClCompile Include="src\cpp\Component\TerrainCollider.cpp" />
     <ClCompile Include="src\cpp\GameObject\Creature.cpp" />
     <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
     <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
     <ClCompile Include="src\cpp\GameObject\Terrain.cpp" />
     <ClCompile Include="src\cpp\Loader\Loader.cpp" />
-    <ClCompile Include="src\cpp\BoxCollider.cpp" />
-    <ClCompile Include="src\cpp\Mesh.cpp" />
     <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
     <ClCompile Include="src\cpp\RenderLoop.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="..\include\header\camera.h" />
     <ClInclude Include="..\include\header\shader.h" />
     <ClInclude Include="src\header\Component\BoxCollider.h" />
+    <ClInclude Include="src\header\Component\TerrainCollider.h" />
     <ClInclude Include="src\header\Component\Collider.h" />
     <ClInclude Include="src\header\Component\Component.h" />
     <ClInclude Include="src\header\Component\Mesh.h" />

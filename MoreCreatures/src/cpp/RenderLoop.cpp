@@ -271,7 +271,7 @@ void RenderScenePass()
     }
 
     // 디버그: 그림자가 생성되는 영역(라이트 frustum)을 노란 와이어 박스로 표시
-    RenderShadowFrustumDebug();
+    //RenderShadowFrustumDebug();
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     glfwSwapBuffers(window);

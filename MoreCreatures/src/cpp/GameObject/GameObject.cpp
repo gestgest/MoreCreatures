@@ -54,6 +54,11 @@ glm::vec3 GameObject::getPosition()
     return position;
 }
 
+void GameObject::setPosition(const glm::vec3& p)
+{
+    position = p;
+}
+
 
 void GameObject::addRepulsion(float deltaTime)
 {

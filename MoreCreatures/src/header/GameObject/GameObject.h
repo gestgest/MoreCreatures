@@ -45,6 +45,7 @@ public:
     void playerMove(glm::vec3 vec, float deltaTime);
 
     glm::vec3 getPosition();
+    void setPosition(const glm::vec3& p);
 
 
     //반발력 추가

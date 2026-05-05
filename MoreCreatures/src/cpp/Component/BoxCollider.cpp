@@ -23,6 +23,9 @@ bool BoxCollider::overlaps(Collider* other)
 {
     if (!other) return false;
 
+    //상대가 비-AABB(예: heightfield)면 그쪽 정밀 검사로 위임 — 호출 순서에 무관하게 정확.
+    if (!other->isAABB()) return other->overlaps(this);
+
     glm::vec3 aMin = worldMin();
     glm::vec3 aMax = worldMax();
 

@@ -24,6 +24,10 @@ public:
     //월드공간 AABB (overlaps 디스패치용). 비-AABB 모양도 보수적 AABB 반환.
     virtual glm::vec3 worldMin() const = 0;
     virtual glm::vec3 worldMax() const = 0;
+
+    //AABB-vs-AABB로 처리 가능한 모양인지. heightfield 등은 false를 반환해서
+    //BoxCollider::overlaps가 더블 디스패치로 정확한 검사로 위임하게 한다.
+    virtual bool isAABB() const { return true; }
 };
 
 #endif
