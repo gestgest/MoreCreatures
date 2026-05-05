@@ -1,11 +1,20 @@
 # Prerequisites
 *.d
 
-# Compiled Object files
+# Compiled Object files (3D 모델 .obj와 충돌하지 않도록 빌드 경로로 한정)
 *.slo
 *.lo
 *.o
-*.obj
+**/x64/**/*.obj
+**/Win32/**/*.obj
+**/Debug/**/*.obj
+**/Release/**/*.obj
+**/build/**/*.obj
+**/bin/**/*.obj
+
+# 3D 모델 폴더는 무시하지 않음 (MoreCreatures/obj 안의 .obj/.mtl 등은 추적)
+!MoreCreatures/obj/
+!MoreCreatures/obj/**
 
 # Precompiled Headers
 *.gch
@@ -35,7 +44,6 @@
 MoreCreatures/MoreCreatures/x64/Debug/
 MoreCreatures/x64/Debug/
 [Bb]in/
-[Obj]/
 
 ## Visual Studio 개인 설정 및 캐시
 .vs/
