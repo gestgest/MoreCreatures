@@ -29,6 +29,7 @@ static float valueNoise(float x, float z, int seed)
     float xf = x - xi;
     float zf = z - zi;
 
+    //높이
     float a = hash01(xi,     zi,     seed);
     float b = hash01(xi + 1, zi,     seed);
     float c = hash01(xi,     zi + 1, seed);
