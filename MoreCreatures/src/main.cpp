@@ -32,7 +32,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 Camera camera(glm::vec3(10.0f, 10.0f, 10.0f));
-glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
+glm::vec3 lightPos(8.0f, 3.0f, 8.0f);
 glm::vec3 lightColor(1.0, 1.0, 1.0);
 
 glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::vec3(0,1.0f,0.0f), glm::vec3(0,-1.0f,0.0f), glm::vec3(-1.0f,0.0f,-1.0f), glm::vec3(1.0f,0,1.0f) };
@@ -232,7 +232,7 @@ void depthProcessing(unsigned int & depthMapFBO, unsigned int& depthMap)
     glBindTexture(GL_TEXTURE_2D, depthMap); //빈 캔버스 활성화
 
     //깊이 전용 메모리 할당. 원래는 GL_RGB지만 깊이만 저장하니 GL_DEPTH_COMPONENT
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
     //픽셀을 확대 축소할때 부드럽게 할건지(GL_LINEAR) 그대로 가져올지(GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

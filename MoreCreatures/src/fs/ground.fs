@@ -28,10 +28,10 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
     float currentDepth = projCoords.z;
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     float closestDepth = texture(shadowMap, projCoords.xy).r; //=>
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.001);  //그림자가 안 보이면 여기 문제
+    bias = 0.001;
 
     float shadow = 0.0;
-
 
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 
@@ -92,15 +92,27 @@ void main()
     // specular (Blinn-Phong) — half vector 기반이 reflect보다 노멀맵 노이즈에 덜 민감
     float specularStrength = 0.35;
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 halfDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(norm, halfDir), 0.0), 32.0);
-    vec3 specular = specularStrength * spec * lightColor;
 
-    // calculate shadow — 세부 노멀맵 노이즈는 그림자 바이어스에 부적합하므로
-    // 지오메트리 노멀(N_world)을 사용한다.
-    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, N);
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
+    //tbn
+    //vec3 halfDir = normalize(lightDir + viewDir);
+    //float spec = pow(max(dot(norm, halfDir), 0.0), 32.0);
+    //vec3 specular = specularStrength * spec * lightColor;
+
+    //// calculate shadow — 세부 노멀맵 노이즈는 그림자 바이어스에 부적합하므로
+    //// 지오메트리 노멀(N_world)을 사용한다.
+    //float shadow = ShadowCalculation(FragPosLightSpace, lightDir, N);
+    //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+    // 일단 이게 맞다
+    vec3 reflectDir = reflect(-lightDir, norm);  
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 1);
+    vec3 specular = specularStrength * spec * lightColor;  
+        
+    // calculate shadow
+    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);       
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color; 
+    
     FragColor = vec4(lighting, 1.0);
     //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

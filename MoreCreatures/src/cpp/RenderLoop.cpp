@@ -204,19 +204,20 @@ void UpdatePhysics(float dt)
 // 결과: 그림자 자체는 월드에 박혀 있고, 단지 "어느 영역을 그릴지"만 카메라를 따라다님.
 
 // 카메라 범위만큼만 그림자 계산 => 최적화를 위한 기술
-static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lightDir,
+static glm::mat4 ComputeLightSpaceMatrix(const glm::vec3& focusPos, const glm::vec3& lightDir,
                                          float radius, unsigned int shadowMapSize)
 {
     //light의 노멀벡터
     glm::vec3 normal_light = glm::normalize(lightDir);
 
-    // (A) 박스 중심: 카메라 앞쪽으로 radius만큼 떨어진 지점 (그래야 시야 안에 그림자가 다 들어감)
-    glm::vec3 center = cam.Position + cam.Front * radius;
+    // (A) 박스 중심: focus 위치(보통 플레이어) 기준. 카메라가 어디를 보든 focus 주변 그림자가 잡힘
+    glm::vec3 center = focusPos;
 
     // (B) 라이트 view 행렬 만들기
     glm::mat4 lightView = glm::lookAt(center - normal_light, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // (C) 텍셀 스냅: 박스 중심을 그림자맵 텍셀 격자에 맞춤
+    // [디버그] 스냅 비활성화 — "전체 검정" 이슈 원인 진단용. 그림자 가장자리 일렁임 부작용 가능.
     float worldUnitsPerTexel = (2.0f * radius) / (float)shadowMapSize; //1픽셀에 몇 m인지 => 스크린 사이즈
     glm::vec4 centerLS = lightView * glm::vec4(center, 1.0f); //라이트 공간으로 전환
     centerLS.x = std::floor(centerLS.x / worldUnitsPerTexel) * worldUnitsPerTexel; //12.5면 12로 스크린 사이즈 단위로 변환
@@ -224,7 +225,7 @@ static glm::mat4 ComputeLightSpaceMatrix(const Camera& cam, const glm::vec3& lig
     glm::vec3 snappedCenter = glm::vec3(glm::inverse(lightView) * centerLS); //다시 현실 공간으로 전환
 
     // 스냅된 중심으로 lightView 다시 만들기
-    lightView = glm::lookAt(snappedCenter - normal_light, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+    //lightView = glm::lookAt(snappedCenter - normal_light, snappedCenter, glm::vec3(0.0f, 1.0f, 0.0f));
 
 // (D) ortho는 항상 같은 크기 (-radius ~ +radius)
 //   z 범위는 그림자 캐스터가 박스 뒤쪽에 있어도 잡히도록 넉넉하게
@@ -241,26 +242,34 @@ void RenderShadowPass()
     glm::vec3 lightDir = -glm::normalize(lightPos); // 라이트가 향하는 방향
 
     // radius: 카메라 주변 그림자 영역의 반지름. "약간 큰 사각형" 정도가 25~30
-    // shadowMapSize: depthMap 텍스처 해상도 (depthProcessing에서 SCR_WIDTH로 만들었음)
 
-    //camera, 빛 방향, 반지름, SCR_WIDTH
-    lightSpaceMatrix = ComputeLightSpaceMatrix(camera, lightDir, 30.0f, SCR_WIDTH);
+    //focus(플레이어 위치), 빛 방향, 반지름
+    lightSpaceMatrix = ComputeLightSpaceMatrix(player->getPosition(), lightDir, 30.0f, SHADOW_MAP_SIZE);
 
     depthShader->use();
     depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT); // 뷰포트를 도화지 크기에 맞춤
+    glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE); // 뷰포트를 도화지 크기에 맞춤
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); // 그림자 도화지(FBO) 장착!
     glClear(GL_DEPTH_BUFFER_BIT); // 도화지 초기화
 
+    // shadow acne 방지: 깊이를 슬로프 비례로 살짝 뒤로 밀어 표면 자기 자신을 덮는 자글거림 제거
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(2.0f, 4.0f); // factor(슬로프 비례), units(고정 오프셋)
+
     player->drawShadow(*depthShader);
     terrain->drawShadow(*depthShader);
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 찰칵! 끝났으니 다시 모니터 화면으로 복귀
 }
 
 void RenderScenePass()
 {
+    // shadow pass에서 viewport가 SHADOW_MAP_SIZE로 바뀌었으니 윈도우 크기로 복원
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
     // render
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //sky
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //glEnable(GL_DEPTH_TEST);를 추가하면 GL_DEPTH_BUFFER_BIT도 넣어라
