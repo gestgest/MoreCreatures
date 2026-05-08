@@ -42,7 +42,7 @@ extern HUD* hud;
 extern float deltaTime;
 extern float lastFrame;
 
-void processInput(GLFWwindow* window);
+//입력 처리는 InputManager 클래스로 이동됨 — processInput forward decl 불필요
 
 
 static Shader* debugLineShader = nullptr;
@@ -148,11 +148,7 @@ float UpdateDeltaTime()
     return deltaTime;
 }
 
-void ProcessInput(float dt)
-{
-    processInput(window);
-    camera.move(player->getPosition());
-}
+//ProcessInput 래퍼는 InputManager::processInput으로 통합되어 제거됨
 
 void UpdatePhysics(float dt)
 {
@@ -199,20 +195,22 @@ void UpdatePhysics(float dt)
 //   - 0 도달 시 "Game Over" 또는 HP 깎이기
 //   - 이동 중엔 더 빨리 감소 (running cost)
 //   - 시간대별 다른 감소 속도 (밤엔 추워서 더 빨리)
+// 파일 전역 static — 함수 내부 static에서 옮김 (외부 ResetHunger에서 리셋 가능하게)
+static float g_hungerDecayTimer = 0.0f;   //식량 자연 감소 누적
+static float g_hpDamageTimer    = 0.0f;   //식량 0 후 HP 깎이는 주기 누적
+
 void UpdateHunger(float dt)
 {
     if (!hud) return;
 
-    static float decayTimer    = 0.0f;     //함수 호출 사이에 값 유지 (전역과 비슷, 단 함수 내부 한정)
-    static float hpDamageTimer = 0.0f;     //식량 0 도달 후 HP 깎이는 주기
     const float DECAY_INTERVAL     = 5.0f; //식량: 5초마다 -1
     const float HP_DAMAGE_INTERVAL = 5.0f; //HP : 식량 0이면 5초마다 -1 (배고파서 죽음)
 
     // === 1) 식량 자연 감소 ===
-    decayTimer += dt;
-    while (decayTimer >= DECAY_INTERVAL)
+    g_hungerDecayTimer += dt;
+    while (g_hungerDecayTimer >= DECAY_INTERVAL)
     {
-        decayTimer -= DECAY_INTERVAL;
+        g_hungerDecayTimer -= DECAY_INTERVAL;
 
         int curFood = hud->getFood();
         if (curFood > 0)
@@ -225,10 +223,10 @@ void UpdateHunger(float dt)
     // === 2) 식량 0이면 HP 깎임 (굶주림 패널티) ===
     if (hud->getFood() == 0)
     {
-        hpDamageTimer += dt;
-        while (hpDamageTimer >= HP_DAMAGE_INTERVAL)
+        g_hpDamageTimer += dt;
+        while (g_hpDamageTimer >= HP_DAMAGE_INTERVAL)
         {
-            hpDamageTimer -= HP_DAMAGE_INTERVAL;
+            g_hpDamageTimer -= HP_DAMAGE_INTERVAL;
 
             int curHp = hud->getHp();
             if (curHp > 0)
@@ -245,8 +243,16 @@ void UpdateHunger(float dt)
     else
     {
         //식량을 회복했으면 HP 데미지 타이머 리셋 — 다음에 0 도달했을 때 새로 5초 카운트
-        hpDamageTimer = 0.0f;
+        g_hpDamageTimer = 0.0f;
     }
+}
+
+
+// 외부(RestartGame 등)에서 호출 가능. 굶주림 관련 타이머만 리셋.
+void ResetHunger()
+{
+    g_hungerDecayTimer = 0.0f;
+    g_hpDamageTimer    = 0.0f;
 }
 
 

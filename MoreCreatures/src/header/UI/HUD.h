@@ -39,6 +39,16 @@ public:
     // HUD 그리기. 깊이 테스트 끄고 알파 블렌딩 켰다가 원래대로 복구함
     void draw();
 
+    // === 리셋 버튼 (게임 오버 화면) ===
+    // HP=0일 때만 화면 중앙에 표시. 다른 때는 hit test도 항상 false.
+
+    // 게임 오버 상태? — 외부(InputManager)가 버튼 hit test 판단할 때 활용
+    bool isGameOver() const { return hp == 0; }
+
+    // (screenX, screenY): GLFW 마우스 좌표(좌상단 0,0). HUD 좌표 변환은 함수 내부에서 처리.
+    // 반환값 true면 호출자가 RestartGame() 등을 부르면 됨.
+    bool isResetButtonClicked(float screenX, float screenY) const;
+
 private:
     Shader* shader = nullptr;
     unsigned int vao = 0;
@@ -57,6 +67,9 @@ private:
     float spacing   =  8.0f;
     float marginX   = 16.0f;   // 화면 우측에서 떨어진 거리
     float marginY   = 16.0f;   // 화면 하단에서 떨어진 거리
+
+    // 리셋 버튼 크기 (정사각형, 화면 중앙 배치)
+    float resetBtnSize = 120.0f;
 };
 
 #endif

@@ -43,6 +43,12 @@
     <Filter Include="헤더 파일\UI">
       <UniqueIdentifier>{d6e5f4a7-8b9c-4dae-bf10-3c4d5e6f7a8b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\cpp\Input">
+      <UniqueIdentifier>{e7f6a5b8-9cad-4ebf-c021-4d5e6f7a8b9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Input">
+      <UniqueIdentifier>{f8a7b6c9-adbe-4fc0-d132-5e6f7a8b9cad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -86,6 +92,9 @@
     </ClCompile>
     <ClCompile Include="src\cpp\UI\HUD.cpp">
       <Filter>소스 파일\cpp\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\Input\InputManager.cpp">
+      <Filter>소스 파일\cpp\Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="src\header\UI\HUD.h">
       <Filter>헤더 파일\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\Input\InputManager.h">
+      <Filter>헤더 파일\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

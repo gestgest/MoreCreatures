@@ -81,6 +81,7 @@ void HUD::setFood(int value)
 }
 
 
+//UI 총괄
 void HUD::draw()
 {
     if (!shader || vao == 0 || foodIcon == 0 || hpIcon == 0) return;
@@ -132,10 +133,7 @@ void HUD::draw()
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-    // ===========================
     // HP 슬롯 (좌하단)
-    // ===========================
-    //
     // 왼쪽 끝에서부터 오른쪽으로 배치:
     //   i=0이 가장 왼쪽
     //   x = marginX + i * (iconSize + spacing)
@@ -157,9 +155,55 @@ void HUD::draw()
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
+    // ===========================
+    // 게임 오버 시 — 화면 중앙에 큰 빨간 하트 버튼
+    // ===========================
+    //
+    // hp == 0 일 때만 그림. 클릭하면 RestartGame()이 호출되도록 InputManager가 hit test를 함.
+    // 시각적으로 "HP 다 닳았다 + 다시 살아나려면 여기 누르세요" 메세지.
+    if (hp == 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, hpIcon);
+
+        //iconSize 임시로 키움 — 다음 프레임 시작 시 어차피 재설정됨
+        shader->setFloat("iconSize", resetBtnSize);
+
+        //중앙 정렬: 좌하단 좌표 = (화면 중앙 - 버튼 절반)
+        float bx = (float)SCR_WIDTH  * 0.5f - resetBtnSize * 0.5f;
+        float by = (float)SCR_HEIGHT * 0.5f - resetBtnSize * 0.5f;
+        shader->setVec2("offset", bx, by);
+
+        //순수 빨강 — "지금 누를 수 있다"는 강한 신호
+        shader->setVec4("tint", 1.0f, 0.0f, 0.0f, 1.0f);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
     glBindVertexArray(0);
 
     // === GL 상태 복원 ===
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+}
+
+
+// === 마우스 클릭이 리셋 버튼 영역 안인지 검사 ===
+//
+// GLFW 마우스 좌표는 좌상단 (0, 0) 기준 — 아래로 갈수록 Y 증가.
+// HUD ortho는 좌하단 (0, 0) 기준 — 위로 갈수록 Y 증가.
+// → 비교 전에 Y를 뒤집어야 함: hudY = SCR_HEIGHT - screenY
+bool HUD::isResetButtonClicked(float screenX, float screenY) const
+{
+    if (hp != 0) return false;   //게임 오버 상태가 아니면 버튼 자체가 없음
+
+    //HUD 좌표로 변환
+    float hudX = screenX;
+    float hudY = (float)SCR_HEIGHT - screenY;
+
+    //버튼 사각형 (draw에서 쓴 것과 동일한 계산식)
+    float bx = (float)SCR_WIDTH  * 0.5f - resetBtnSize * 0.5f;
+    float by = (float)SCR_HEIGHT * 0.5f - resetBtnSize * 0.5f;
+
+    //AABB hit test
+    return hudX >= bx && hudX <= bx + resetBtnSize
+        && hudY >= by && hudY <= by + resetBtnSize;
 }

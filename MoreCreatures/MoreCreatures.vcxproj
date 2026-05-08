@@ -144,6 +144,7 @@
     <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
     <ClCompile Include="src\cpp\RenderLoop.cpp" />
+    <ClCompile Include="src\cpp\Input\InputManager.cpp" />
     <ClCompile Include="src\cpp\UI\HUD.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="src\header\GameObject\Mouse.h" />
     <ClInclude Include="src\header\GameObject\Player.h" />
     <ClInclude Include="src\header\UI\HUD.h" />
+    <ClInclude Include="src\header\Input\InputManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\fs\DepthShader.fs" />

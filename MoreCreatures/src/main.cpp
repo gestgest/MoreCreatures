@@ -16,6 +16,8 @@
 
 #include <UI/HUD.h>
 
+#include <Input/InputManager.h>
+
 #include <Loader/Loader.h>
 
 #include <iostream>
@@ -26,18 +28,15 @@
 //std_image.h를 이용해서 이미지 열려면 위에 이거 정의해야함
 #include <header/std_image.h>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+// 입력 처리는 모두 InputManager로 분리됨 — 콜백 forward decl 불필요
 
 float UpdateDeltaTime();
-void ProcessInput(float dt);
 void UpdatePhysics(float dt);
 void UpdateHunger(float dt);
 void UpdatePickup(float dt);
 void RenderShadowPass();
 void Rendering();
+void ResetHunger();      //굶주림 타이머 리셋 (RenderLoop.cpp에 정의)
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -62,10 +61,7 @@ unsigned int depthMap = 0;
 glm::mat4 lightSpaceMatrix;
 HUD* hud = nullptr;
 
-//mouse
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
+//(이전엔 lastX/lastY/firstMouse 마우스 상태 전역이 있었지만 InputManager 안으로 캡슐화됨)
 
 
 void depthProcessing(unsigned int& depthMapFBO, unsigned int& depthMap);
@@ -105,10 +101,9 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, key_callback);
+
+    //모든 GLFW 콜백 등록 — InputManager 한 줄로 묶어서 처리
+    InputManager::registerCallbacks(window);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -187,7 +182,7 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         float dt = UpdateDeltaTime();
-        ProcessInput(dt);
+        InputManager::processInput(window, dt);   //WASD 폴링 + 카메라 추적
         UpdatePhysics(dt);
         UpdateHunger(dt);     //시간 경과로 식량 자동 감소
         UpdatePickup(dt);     //플레이어가 아몬드 근처면 먹기
@@ -207,80 +202,45 @@ int main()
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+// === 게임 전체 상태를 시작 시점으로 되돌림 ===
+//
+// 리셋 항목:
+//   1. HUD 풀로 (식량 5/5, HP 5/5)
+//   2. 모든 아몬드 부활 (먹은 것들 다시 isActive=true)
+//   3. 플레이어 위치/속도 초기화
+//   4. 굶주림/HP 데미지 타이머 0으로
+//
+// 리셋 안 하는 것:
+//   - 카메라 각도 (사용자 시야 유지가 자연스러움)
+//   - 아몬드 위치 (시드 고정이라 어차피 같은 위치)
+//   - 라이트 위치 / 시간 (의미 없음)
+void RestartGame()
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (!player || !hud) return;
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        player->playerMove(camera.getFrontPlayer(), deltaTime);
-        camera.move(player->getPosition());
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        player->playerMove(-camera.getFrontPlayer(), deltaTime);
-        camera.move(player->getPosition());
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        player->playerMove(-camera.getRightPlayer(), deltaTime);
-        camera.move(player->getPosition());
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        player->playerMove(camera.getRightPlayer(), deltaTime);
-        camera.move(player->getPosition());
-    }
-}
+    //1. HUD 풀로 리셋 — getMaxXxx로 가져와서 의도 명확하게
+    hud->setFood(hud->getMaxFood());
+    hud->setHp(hud->getMaxHp());
 
-//콜백함수
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+    //2. 모든 아몬드 부활 — 먹어서 isActive=false였던 것들 다 살림
+    int revived = 0;
+    for (Almond* a : almonds)
     {
-        camera.isThirdView = !camera.isThirdView;
-    }
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
-
-
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
+        if (!a->getIsActive())
+        {
+            a->setIsActive(true);
+            revived++;
+        }
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    //3. 플레이어 위치/속도 리셋 — Mouse 초기 spawn과 동일 (Mouse.cpp의 init 참조)
+    player->setPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+    player->setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 
-    lastX = xpos;
-    lastY = ypos;
+    //4. 굶주림 타이머 리셋 — 안 하면 리셋 직후 바로 또 깎임
+    ResetHunger();
 
-    camera.ProcessMouseMovement(xoffset, yoffset, player->getPosition());
-    player->setFront(camera.getFrontPlayer());
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera.ProcessMouseScroll(yoffset);
+    std::cout << "[리스폰] 게임 재시작 — 아몬드 " << revived << "개 부활" << std::endl;
 }
 
 
