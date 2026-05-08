@@ -5,8 +5,6 @@
 
 #include <glad/glad.h>
 
-
-//      =>
 void Mesh::init_sphere(float** vertices) // 3.14
 {
     //nAttr : 8

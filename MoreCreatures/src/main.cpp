@@ -7,6 +7,7 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
 #include <GameObject/Mouse.h>
+#include <GameObject/Almond.h>
 
 #include <UI/HUD.h>
 
@@ -14,6 +15,7 @@
 
 #include <iostream>
 #include <vector>
+#include <random>
 
 #define STB_IMAGE_IMPLEMENTATION
 //std_image.h를 이용해서 이미지 열려면 위에 이거 정의해야함
@@ -41,6 +43,7 @@ glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::v
 
 Mouse* player;
 std::vector<GameObject*> objects;
+std::vector<Almond*> almonds;   //식량 아이템 — objects와 별도. 물리/충돌 미적용 단계.
 
 GLFWwindow* window = nullptr;
 Ground* ground = nullptr;
@@ -133,6 +136,36 @@ int main()
     hud->init();
     hud->setFood(5);
 
+    // === 아몬드 랜덤 스폰 ===
+    // terrain 좌표계: x,z 모두 [-half, +half] 범위 (gridSize=128, cellSize=1.0 → half=64)
+    // 가장자리는 5 유닛 안쪽으로 들여서 깔끔하게.
+    // y는 terrain->getHeightAt()으로 표면 위에 정확히 안착.
+    {
+        const int   numAlmonds = 20; // 아몬드 갯수
+        const float halfExtent = 64.0f;     //terrain.gridSize * cellSize / 2
+        const float inset      = 5.0f;
+        const float minXZ = -halfExtent + inset;
+        const float maxXZ =  halfExtent - inset;
+
+        //고정 시드 사용 — 매 실행마다 같은 위치에 나오게. 디버깅 편의.
+        //랜덤 위치를 원하면 std::random_device 등으로 대체 가능.
+        std::mt19937 rng(42);
+        std::uniform_real_distribution<float> distXZ(minXZ, maxXZ);
+
+        for (int i = 0; i < numAlmonds; ++i)
+        {
+            float x = distXZ(rng);
+            float z = distXZ(rng);
+            float y = terrain->getHeightAt(x, z);
+
+            Almond* a = new Almond(mouseShader, glm::vec3(x, y, z));
+            a->setShadowMap(depthMap);
+            almonds.push_back(a);
+        }
+
+        std::cout << "Spawned " << almonds.size() << " almonds" << std::endl;
+    }
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -148,6 +181,10 @@ int main()
     for (int i = 0; i < objects.size(); i++)
     {
         delete objects[i];
+    }
+    for (Almond* a : almonds)
+    {
+        delete a;
     }
     delete hud;
     // glfw: terminate, clearing all previously allocated GLFW resources.

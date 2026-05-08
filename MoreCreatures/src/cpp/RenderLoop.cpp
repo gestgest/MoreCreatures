@@ -8,6 +8,7 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
 #include <GameObject/Mouse.h>
+#include <GameObject/Almond.h>
 
 #include <Component/Collider.h>
 
@@ -26,6 +27,7 @@ extern glm::vec3 lightColor;
 
 extern Mouse* player;
 extern std::vector<GameObject*> objects;
+extern std::vector<Almond*> almonds;
 
 extern GLFWwindow* window;
 extern Ground* ground;
@@ -250,6 +252,12 @@ void RenderShadowPass()
     player->drawShadow(*depthShader);
     terrain->drawShadow(*depthShader);
 
+    //아몬드도 그림자 캐스트
+    for (Almond* a : almonds)
+    {
+        a->drawShadow(*depthShader);
+    }
+
     glDisable(GL_POLYGON_OFFSET_FILL);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 찰칵! 끝났으니 다시 모니터 화면으로 복귀
@@ -269,6 +277,12 @@ void Rendering()
     for (int i = 0; i < objects.size(); i++)
     {
         objects[i]->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
+    }
+
+    //아몬드 렌더링 — objects와 분리되어 있어서 따로 호출
+    for (Almond* a : almonds)
+    {
+        a->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
     }
 
     // 디버그: 그림자가 생성되는 영역(라이트 frustum)을 노란 와이어 박스로 표시

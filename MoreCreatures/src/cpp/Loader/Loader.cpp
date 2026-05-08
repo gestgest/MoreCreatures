@@ -64,7 +64,10 @@ bool Loader::loadTexture(unsigned int& texture, const std::string& path)
 
 
 //obj 변환기
-bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices, int& outVertexCount)
+//targetObject가 비어있지 않으면 해당 이름의 shape만 골라서 로드한다.
+//(예: amond.obj 안에 "Floor"와 "Almond"가 같이 있을 때 "Almond"만 추출)
+bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices, int& outVertexCount,
+                       const std::string& targetObject)
 {
     //설정
     tinyobj::ObjReaderConfig config;
@@ -93,6 +96,12 @@ bool Loader::loadModel(const std::string& path, std::vector<float>& outVertices,
 
     for (const auto& shape : shapes)
     {
+        //targetObject 필터: 비어있지 않으면 이름이 일치하는 shape만 처리
+        if (!targetObject.empty() && shape.name != targetObject)
+        {
+            continue;
+        }
+
         const auto& mesh = shape.mesh; //tinyobj::mesh_t
         size_t indexOffset = 0;
 

@@ -135,6 +135,7 @@
     <ClCompile Include="src\cpp\Component\BoxCollider.cpp" />
     <ClCompile Include="src\cpp\Component\Mesh.cpp" />
     <ClCompile Include="src\cpp\Component\TerrainCollider.cpp" />
+    <ClCompile Include="src\cpp\GameObject\Almond.cpp" />
     <ClCompile Include="src\cpp\GameObject\Creature.cpp" />
     <ClCompile Include="src\cpp\GameObject\GameObject.cpp" />
     <ClCompile Include="src\cpp\GameObject\Ground.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="src\header\Component\Mesh.h" />
     <ClInclude Include="src\header\Config.h" />
     <ClInclude Include="src\header\Loader\Loader.h" />
+    <ClInclude Include="src\header\GameObject\Almond.h" />
     <ClInclude Include="src\header\GameObject\Creature.h" />
     <ClInclude Include="src\header\GameObject\GameObject.h" />
     <ClInclude Include="src\header\GameObject\Ground.h" />
