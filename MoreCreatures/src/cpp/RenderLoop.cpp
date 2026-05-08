@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <cfloat>
+#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
 extern Camera camera;
@@ -184,6 +185,115 @@ void UpdatePhysics(float dt)
     }
 }
 
+
+// === 시간 경과에 따른 식량 자동 감소 (배고픔) ===
+//
+// 디자인:
+//   - 플레이어 행동과 무관하게 시간이 흐르면 식량이 줄어듦. "서바이벌 압박" 부여.
+//   - 5초마다 1칸씩 감소. 5/5에서 시작하면 25초만에 0이 됨 (짧은 테스트 사이클).
+//   - while 루프로 "한 프레임에 dt가 매우 클 때(디버거 정지 등) 여러 칸 한꺼번에 감소" 처리.
+//     단순 if였으면 누적된 시간을 무시하고 1칸만 감소했을 것.
+//   - 식량이 0이면 더 출력 안 함 — 콘솔 spam 방지.
+//
+// 향후 확장:
+//   - 0 도달 시 "Game Over" 또는 HP 깎이기
+//   - 이동 중엔 더 빨리 감소 (running cost)
+//   - 시간대별 다른 감소 속도 (밤엔 추워서 더 빨리)
+void UpdateHunger(float dt)
+{
+    if (!hud) return;
+
+    static float decayTimer    = 0.0f;     //함수 호출 사이에 값 유지 (전역과 비슷, 단 함수 내부 한정)
+    static float hpDamageTimer = 0.0f;     //식량 0 도달 후 HP 깎이는 주기
+    const float DECAY_INTERVAL     = 5.0f; //식량: 5초마다 -1
+    const float HP_DAMAGE_INTERVAL = 5.0f; //HP : 식량 0이면 5초마다 -1 (배고파서 죽음)
+
+    // === 1) 식량 자연 감소 ===
+    decayTimer += dt;
+    while (decayTimer >= DECAY_INTERVAL)
+    {
+        decayTimer -= DECAY_INTERVAL;
+
+        int curFood = hud->getFood();
+        if (curFood > 0)
+        {
+            hud->setFood(curFood - 1);
+            std::cout << "[배고픔] 식량: " << hud->getFood() << "/" << hud->getMaxFood() << std::endl;
+        }
+    }
+
+    // === 2) 식량 0이면 HP 깎임 (굶주림 패널티) ===
+    if (hud->getFood() == 0)
+    {
+        hpDamageTimer += dt;
+        while (hpDamageTimer >= HP_DAMAGE_INTERVAL)
+        {
+            hpDamageTimer -= HP_DAMAGE_INTERVAL;
+
+            int curHp = hud->getHp();
+            if (curHp > 0)
+            {
+                hud->setHp(curHp - 1);
+                std::cout << "[굶주림] HP: " << hud->getHp() << "/" << hud->getMaxHp() << std::endl;
+
+                if (hud->getHp() == 0)
+                    std::cout << "[게임 오버] 굶어 죽었습니다..." << std::endl;
+            }
+            //이미 0이면 더 깎을 거 없음 — 메세지도 안 띄움 (게임 오버 한 번만 출력)
+        }
+    }
+    else
+    {
+        //식량을 회복했으면 HP 데미지 타이머 리셋 — 다음에 0 도달했을 때 새로 5초 카운트
+        hpDamageTimer = 0.0f;
+    }
+}
+
+
+// === 플레이어 ↔ 아몬드 거리 체크 → 먹기 처리 ===
+//
+// 디자인 결정:
+//   - 정밀 충돌(BoxCollider) 대신 거리 기반 체크 사용. 픽업 시스템은 정확도보다
+//     "근처에 가면 자동으로" 부드럽게 판정하는 게 게임 필이 좋음.
+//   - 거리 제곱(dist²)으로 비교 — sqrt() 안 부르니까 빠르고, 비교 결과는 동일.
+//     (양수끼리 비교할 때 d < r ⇔ d² < r² 이 성립)
+//   - isActive=false 하나로 끝 — Almond::drawGameObject/drawShadow가 이미
+//     isActive 체크해서 알아서 스킵함. 메모리는 안 풀고 깃발만 내림.
+//
+// 향후 확장 여지:
+//   - 리스폰 타이머 (먹은 자리에서 N초 후 isActive=true 복구)
+//   - 사운드/파티클 효과
+//   - "max food 도달 시 픽업 차단" 옵션
+void UpdatePickup(float dt)
+{
+    if (!player || !hud) return;
+
+    const float pickupRadius = 1.5f;                       //이 거리 안에 들어오면 픽업
+    const float pickupRadiusSq = pickupRadius * pickupRadius;
+
+    glm::vec3 playerPos = player->getPosition();
+
+    for (Almond* a : almonds)
+    {
+        //이미 먹은 건 건너뛰기 — 같은 아몬드가 다시 먹히지 않게
+        if (!a->getIsActive()) continue;
+
+        glm::vec3 ap = a->getPosition();
+        glm::vec3 d = playerPos - ap;
+        float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+
+        if (distSq < pickupRadiusSq)
+        {
+            //먹기 처리: 사라지게 + HUD +1
+            //(HUD::setFood가 [0, maxFood]로 자동 클램프해서 5/5 넘어가도 안전)
+            a->setIsActive(false);
+            hud->setFood(hud->getFood() + 1);
+
+            std::cout << "[먹기] 식량: " << hud->getFood() << "/" << hud->getMaxFood() << std::endl;
+        }
+    }
+}
+
 // "Stable Shadow Map" 기법.
 // 핵심 아이디어 두 가지:
 //   1) 박스 크기는 항상 고정 (radius * 2). 그래야 카메라가 회전/줌해도 그림자가
@@ -249,13 +359,10 @@ void RenderShadowPass()
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.0f, 4.0f); // factor(슬로프 비례), units(고정 오프셋)
 
-    player->drawShadow(*depthShader);
-    terrain->drawShadow(*depthShader);
-
     //아몬드도 그림자 캐스트
-    for (Almond* a : almonds)
+    for (int i = 0; i < objects.size(); i++)
     {
-        a->drawShadow(*depthShader);
+        objects[i]->drawShadow(*depthShader);
     }
 
     glDisable(GL_POLYGON_OFFSET_FILL);
@@ -277,12 +384,6 @@ void Rendering()
     for (int i = 0; i < objects.size(); i++)
     {
         objects[i]->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
-    }
-
-    //아몬드 렌더링 — objects와 분리되어 있어서 따로 호출
-    for (Almond* a : almonds)
-    {
-        a->drawGameObject(camera, lightColor, lightPos, lightSpaceMatrix);
     }
 
     // 디버그: 그림자가 생성되는 영역(라이트 frustum)을 노란 와이어 박스로 표시

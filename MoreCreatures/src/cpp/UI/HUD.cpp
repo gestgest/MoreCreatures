@@ -63,6 +63,14 @@ void HUD::init()
 
     // 3) 아이콘 텍스처 로드 (PNG 알파 채널 포함 → Loader에서 RGBA 자동 감지)
     Loader::loadTexture(foodIcon, "textures/food_icon.png");
+    Loader::loadTexture(hpIcon,   "textures/heart.png");
+}
+
+
+void HUD::setHp(int value)
+{
+    //0 ~ maxHp 범위로 클램프 — food와 동일한 패턴
+    hp = std::max(0, std::min(value, maxHp));
 }
 
 
@@ -75,7 +83,7 @@ void HUD::setFood(int value)
 
 void HUD::draw()
 {
-    if (!shader || vao == 0 || foodIcon == 0) return;
+    if (!shader || vao == 0 || foodIcon == 0 || hpIcon == 0) return;
 
     // === GL 상태 변경 ===
     // HUD는 항상 화면 위에 보여야 하므로 깊이 테스트 끔.
@@ -96,29 +104,57 @@ void HUD::draw()
     shader->setMat4("projection", projection);
     shader->setFloat("iconSize", iconSize);
 
-    // 텍스처 바인딩
+    // 텍스처는 항상 0번 유닛에서 샘플 (셰이더 sampler 바인딩)
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, foodIcon);
     shader->setInt("iconTex", 0);
 
-    // === 아이콘 위치 계산 (우하단 기준) ===
+    glBindVertexArray(vao); //여기서도 그릴 준비 => 마치 vao는 설명서같다.
+
+    // ===========================
+    // 식량 슬롯 (우하단)
+    // ===========================
     //
     // 우측 끝에서부터 거꾸로 배치:
     //   가장 오른쪽 아이콘의 우측 x = SCR_WIDTH - marginX
-    //   각 아이콘은 (iconSize + spacing)만큼 왼쪽으로 이동
     //   i번째(0이 가장 오른쪽) 아이콘의 좌측 x = (SCR_WIDTH - marginX) - iconSize - i*(iconSize + spacing)
-    //
-
-    
-    glBindVertexArray(vao); //여기서도 그릴 준비 => 마치 vao는 설명서같다.
-
-    //여기서 위치 세팅
-    for (int i = 0; i < food; ++i)
+    glBindTexture(GL_TEXTURE_2D, foodIcon);
+    for (int i = 0; i < maxFood; ++i)
     {
         float x = (float)SCR_WIDTH - marginX - iconSize - i * (iconSize + spacing);
         float y = marginY;
         shader->setVec2("offset", x, y);
-        glDrawArrays(GL_TRIANGLES, 0, 6); //그리는 함수
+
+        if (i < food)
+            shader->setVec4("tint", 1.0f, 1.0f, 1.0f, 1.0f);  //가득 찬 슬롯 — 원본 색
+        else
+            shader->setVec4("tint", 0.0f, 0.0f, 0.0f, 1.0f);  //빈 슬롯 — 검은 실루엣
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    // ===========================
+    // HP 슬롯 (좌하단)
+    // ===========================
+    //
+    // 왼쪽 끝에서부터 오른쪽으로 배치:
+    //   i=0이 가장 왼쪽
+    //   x = marginX + i * (iconSize + spacing)
+    //
+    // heart.png는 흰색 단색 이미지 → tint를 빨강(1,0,0,1)으로 곱해서 빨간 하트로 칠함.
+    // 빈 슬롯은 어두운 빨강(0.2,0,0,1) — "사라진 자리"를 살짝 보여줌.
+    glBindTexture(GL_TEXTURE_2D, hpIcon);
+    for (int i = 0; i < maxHp; ++i)
+    {
+        float x = marginX + i * (iconSize + spacing);
+        float y = marginY;
+        shader->setVec2("offset", x, y);
+
+        if (i < hp)
+            shader->setVec4("tint", 1.0f, 0.0f, 0.0f, 1.0f);  //가득 찬 HP — 빨간색
+        else
+            shader->setVec4("tint", 0.2f, 0.0f, 0.0f, 1.0f);  //빈 HP — 어두운 빨강
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     glBindVertexArray(0);

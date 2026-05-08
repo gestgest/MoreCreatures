@@ -31,6 +31,11 @@ public:
     int  getFood() const { return food; }
     int  getMaxFood() const { return maxFood; }
 
+    // HP 게이지 (0 ~ maxHp). 식량 0 도달 시 패널티로 깎임.
+    void setHp(int value);
+    int  getHp() const { return hp; }
+    int  getMaxHp() const { return maxHp; }
+
     // HUD 그리기. 깊이 테스트 끄고 알파 블렌딩 켰다가 원래대로 복구함
     void draw();
 
@@ -39,10 +44,13 @@ private:
     unsigned int vao = 0;
     unsigned int vbo = 0;
 
-    unsigned int foodIcon = 0;   // 아이콘 텍스처 ID
+    unsigned int foodIcon = 0;   // 식량 아이콘 텍스처 ID
+    unsigned int hpIcon   = 0;   // HP 아이콘(하트) 텍스처 ID
 
     int food = 5;        // 현재 식량
     int maxFood = 5;     // 슬롯 갯수
+    int hp   = 5;        // 현재 HP
+    int maxHp = 5;       // HP 슬롯 갯수
 
     // 레이아웃 (픽셀 단위)
     float iconSize  = 48.0f;

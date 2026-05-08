@@ -1,6 +1,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+//콘솔 한글 출력 위해 UTF-8 코드페이지로 전환
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 #include <header/camera.h>
 #include <header/shader.h>
 
@@ -29,6 +34,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 float UpdateDeltaTime();
 void ProcessInput(float dt);
 void UpdatePhysics(float dt);
+void UpdateHunger(float dt);
+void UpdatePickup(float dt);
 void RenderShadowPass();
 void Rendering();
 
@@ -43,7 +50,8 @@ glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::v
 
 Mouse* player;
 std::vector<GameObject*> objects;
-std::vector<Almond*> almonds;   //식량 아이템 — objects와 별도. 물리/충돌 미적용 단계.
+std::vector<Almond*> almonds;
+
 
 GLFWwindow* window = nullptr;
 Ground* ground = nullptr;
@@ -70,6 +78,12 @@ void depthProcessing(unsigned int& depthMapFBO, unsigned int& depthMap);
 
 int main()
 {
+    //Windows 콘솔 코드페이지를 UTF-8로 변경 — 안 하면 한글이 깨져서 출력됨
+    //(소스는 /utf-8 플래그로 UTF-8 저장, 콘솔 기본은 CP949 → mismatch)
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+#endif
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -131,10 +145,11 @@ int main()
     mouse->setShadowMap(depthMap);
     terrain->setShadowMap(depthMap);
 
-    // HUD 초기화 — 식량 게이지 5칸 표시
+    // HUD 초기화 — 식량/HP 게이지 5칸씩 표시
     hud = new HUD();
     hud->init();
     hud->setFood(5);
+    hud->setHp(5);
 
     // === 아몬드 랜덤 스폰 ===
     // terrain 좌표계: x,z 모두 [-half, +half] 범위 (gridSize=128, cellSize=1.0 → half=64)
@@ -158,12 +173,13 @@ int main()
             float z = distXZ(rng);
             float y = terrain->getHeightAt(x, z);
 
-            Almond* a = new Almond(mouseShader, glm::vec3(x, y, z));
-            a->setShadowMap(depthMap);
-            almonds.push_back(a);
+            Almond* almond = new Almond(mouseShader, glm::vec3(x, y, z));
+            almond->setShadowMap(depthMap);
+            objects.push_back(almond);
+            almonds.push_back(almond);
         }
 
-        std::cout << "Spawned " << almonds.size() << " almonds" << std::endl;
+        std::cout << "Spawned " << numAlmonds << " almonds" << std::endl;
     }
 
     // render loop
@@ -173,6 +189,8 @@ int main()
         float dt = UpdateDeltaTime();
         ProcessInput(dt);
         UpdatePhysics(dt);
+        UpdateHunger(dt);     //시간 경과로 식량 자동 감소
+        UpdatePickup(dt);     //플레이어가 아몬드 근처면 먹기
         RenderShadowPass();
         Rendering();
     }
@@ -181,10 +199,6 @@ int main()
     for (int i = 0; i < objects.size(); i++)
     {
         delete objects[i];
-    }
-    for (Almond* a : almonds)
-    {
-        delete a;
     }
     delete hud;
     // glfw: terminate, clearing all previously allocated GLFW resources.

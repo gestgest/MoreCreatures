@@ -61,6 +61,7 @@ public:
 
     void setIsActive(bool isActive);
     bool getIsActive();
+    virtual void drawShadow(Shader& shader) = 0;
 };
 
 #endif

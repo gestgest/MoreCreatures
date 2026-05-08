@@ -15,6 +15,9 @@ public:
     bool GetIsGround();
 
     void setFront(glm::vec3 front);
+
+    //비어있는 함수
+    void drawShadow(Shader& shader) override {}
 };
 #endif
 #pragma once
