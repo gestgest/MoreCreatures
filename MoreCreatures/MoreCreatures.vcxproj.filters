@@ -37,6 +37,12 @@
     <Filter Include="소스 파일\cpp\Loader">
       <UniqueIdentifier>{b4c3d2e5-6f7a-4b8c-9d0e-1f2a3b4c5d6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\cpp\UI">
+      <UniqueIdentifier>{c5d4e3f6-7a8b-4c9d-ae0f-2b3c4d5e6f7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\UI">
+      <UniqueIdentifier>{d6e5f4a7-8b9c-4dae-bf10-3c4d5e6f7a8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -74,6 +80,9 @@
     </ClCompile>
     <ClCompile Include="src\cpp\Loader\Loader.cpp">
       <Filter>소스 파일\cpp\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cpp\UI\HUD.cpp">
+      <Filter>소스 파일\cpp\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +128,9 @@
     <ClInclude Include="src\header\Loader\Loader.h">
       <Filter>헤더 파일\Loader</Filter>
     </ClInclude>
+    <ClInclude Include="src\header\UI\HUD.h">
+      <Filter>헤더 파일\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vs\ground.vs">
@@ -138,6 +150,12 @@
     </None>
     <None Include="src\vs\DepthShader.vs">
       <Filter>소스 파일\vs</Filter>
+    </None>
+    <None Include="src\vs\hud.vs">
+      <Filter>소스 파일\vs</Filter>
+    </None>
+    <None Include="src\fs\hud.fs">
+      <Filter>소스 파일\fs</Filter>
     </None>
   </ItemGroup>
 </Project>

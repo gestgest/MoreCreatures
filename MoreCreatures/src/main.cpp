@@ -8,6 +8,8 @@
 #include <GameObject/Terrain.h>
 #include <GameObject/Mouse.h>
 
+#include <UI/HUD.h>
+
 #include <Loader/Loader.h>
 
 #include <iostream>
@@ -26,7 +28,7 @@ float UpdateDeltaTime();
 void ProcessInput(float dt);
 void UpdatePhysics(float dt);
 void RenderShadowPass();
-void RenderScenePass();
+void Rendering();
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -47,6 +49,7 @@ Shader* depthShader = nullptr;
 unsigned int depthMapFBO = 0;
 unsigned int depthMap = 0;
 glm::mat4 lightSpaceMatrix;
+HUD* hud = nullptr;
 
 //mouse
 float lastX = SCR_WIDTH / 2.0f;
@@ -125,6 +128,11 @@ int main()
     mouse->setShadowMap(depthMap);
     terrain->setShadowMap(depthMap);
 
+    // HUD 초기화 — 식량 게이지 5칸 표시
+    hud = new HUD();
+    hud->init();
+    hud->setFood(5);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -133,7 +141,7 @@ int main()
         ProcessInput(dt);
         UpdatePhysics(dt);
         RenderShadowPass();
-        RenderScenePass();
+        Rendering();
     }
 
     //메모리 제거
@@ -141,6 +149,7 @@ int main()
     {
         delete objects[i];
     }
+    delete hud;
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();

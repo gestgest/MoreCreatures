@@ -48,7 +48,15 @@ bool Loader::loadTexture(unsigned int& texture, const std::string& path)
         return false;
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    // 채널 수에 따라 OpenGL 포맷 자동 결정.
+    // PNG with alpha (RGBA) → GL_RGBA, 일반 RGB → GL_RGB, 그레이스케일 → GL_RED.
+    // 채널 수 무시하고 GL_RGB로 강제하면 RGBA 이미지에서 사이즈 mismatch로 깨짐.
+    GLenum format = GL_RGB;
+    if (nrChannels == 1)      format = GL_RED;
+    else if (nrChannels == 3) format = GL_RGB;
+    else if (nrChannels == 4) format = GL_RGBA;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
     return true;

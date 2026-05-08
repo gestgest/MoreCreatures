@@ -11,6 +11,8 @@
 
 #include <Component/Collider.h>
 
+#include <UI/HUD.h>
+
 #include <Config.h>
 
 #include <vector>
@@ -32,25 +34,13 @@ extern Shader* depthShader;
 extern unsigned int depthMapFBO;
 extern unsigned int depthMap;
 extern glm::mat4 lightSpaceMatrix;
+extern HUD* hud;
 
 extern float deltaTime;
 extern float lastFrame;
 
 void processInput(GLFWwindow* window);
 
-
-// === 디버그용: 라이트 frustum(그림자 영역) 와이어프레임 박스 그리기 ===
-//
-// 원리:
-//   lightSpaceMatrix = lightProjection * lightView
-//   이 행렬은 "월드 좌표 → 라이트 NDC([-1,+1]^3)" 변환이다.
-//   따라서 그 역행렬은 "라이트 NDC → 월드 좌표"를 해주므로,
-//   NDC 큐브의 8개 코너를 역행렬로 변환하면 ortho 박스의 월드 위치를 얻을 수 있다.
-//   이 8개 점을 12개 모서리로 이어 그리면 그림자 영역이 화면에 보인다.
-//
-// 사용법:
-//   RenderScenePass()의 끝부분(swap 직전)에서 RenderShadowFrustumDebug() 호출.
-//   카메라 시야에서 박스 안에 들어온 부분만 그림자가 생성된다.
 
 static Shader* debugLineShader = nullptr;
 static unsigned int debugLineVAO = 0;
@@ -265,7 +255,9 @@ void RenderShadowPass()
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // 찰칵! 끝났으니 다시 모니터 화면으로 복귀
 }
 
-void RenderScenePass()
+
+//그리는 함수
+void Rendering()
 {
     // shadow pass에서 viewport가 SHADOW_MAP_SIZE로 바뀌었으니 윈도우 크기로 복원
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -281,6 +273,15 @@ void RenderScenePass()
 
     // 디버그: 그림자가 생성되는 영역(라이트 frustum)을 노란 와이어 박스로 표시
     //RenderShadowFrustumDebug();
+
+    //UI 라인
+    
+
+    // HUD는 모든 3D 씬 위에 그려져야 하므로 swap 직전에 호출
+    if (hud)
+    {
+        hud->draw();
+    }
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     glfwSwapBuffers(window);

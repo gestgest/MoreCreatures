@@ -143,6 +143,7 @@
     <ClCompile Include="src\cpp\GameObject\Mouse.cpp" />
     <ClCompile Include="src\cpp\Player.cpp" />
     <ClCompile Include="src\cpp\RenderLoop.cpp" />
+    <ClCompile Include="src\cpp\UI\HUD.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -162,13 +163,16 @@
     <ClInclude Include="src\header\GameObject\Terrain.h" />
     <ClInclude Include="src\header\GameObject\Mouse.h" />
     <ClInclude Include="src\header\GameObject\Player.h" />
+    <ClInclude Include="src\header\UI\HUD.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\fs\DepthShader.fs" />
     <None Include="src\fs\ground.fs" />
+    <None Include="src\fs\hud.fs" />
     <None Include="src\fs\mouse.fs" />
     <None Include="src\vs\DepthShader.vs" />
     <None Include="src\vs\ground.vs" />
+    <None Include="src\vs\hud.vs" />
     <None Include="src\vs\mouse.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
