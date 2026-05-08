@@ -7,7 +7,6 @@ in vec2 TexCoord;
 in vec4 FragPosLightSpace;
 in vec3 T_world;
 in vec3 B_world;
-in vec3 N_world;
 
 uniform sampler2D texture1;
 uniform sampler2D shadowMap;
@@ -28,10 +27,11 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
     float currentDepth = projCoords.z;
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     float closestDepth = texture(shadowMap, projCoords.xy).r; //=>
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.001);  //그림자가 안 보이면 여기 문제
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.001);  
     bias = 0.001;
 
     float shadow = 0.0;
+
 
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 
@@ -55,6 +55,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 normal)
     return shadow;
 }
 
+
 void main()
 {
     vec3 color = texture(texture1, TexCoord).rgb;
@@ -70,7 +71,8 @@ void main()
 
     //TBN: tangent space → world space
     //보간된 T, B, N을 다시 정규화/직교화해서 일관된 기저를 얻는다.
-    vec3 N = normalize(N_world);
+    //geometry normal은 vs에서 넘어온 Normal을 사용 (이전엔 N_world를 따로 뒀지만 통합)
+    vec3 N = normalize(Normal);
     vec3 T = normalize(T_world - dot(T_world, N) * N);
     vec3 B = normalize(cross(T, N));
     mat3 TBN = mat3(T, B, N);
@@ -79,7 +81,7 @@ void main()
     vec3 norm = normalize(TBN * nTangent);
 
     // ambient
-    float ambientStrength = 0.85;
+    float ambientStrength = 0.25;
     vec3 ambient = ambientStrength * lightColor;
 
     // diffuse
@@ -92,27 +94,14 @@ void main()
     // specular (Blinn-Phong) — half vector 기반이 reflect보다 노멀맵 노이즈에 덜 민감
     float specularStrength = 0.35;
     vec3 viewDir = normalize(viewPos - FragPos);
-
-
-    //tbn
-    //vec3 halfDir = normalize(lightDir + viewDir);
-    //float spec = pow(max(dot(norm, halfDir), 0.0), 32.0);
-    //vec3 specular = specularStrength * spec * lightColor;
-
-    //// calculate shadow — 세부 노멀맵 노이즈는 그림자 바이어스에 부적합하므로
-    //// 지오메트리 노멀(N_world)을 사용한다.
-    //float shadow = ShadowCalculation(FragPosLightSpace, lightDir, N);
-    //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
-
-    // 일단 이게 맞다
-    vec3 reflectDir = reflect(-lightDir, norm);  
+    vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 1);
-    vec3 specular = specularStrength * spec * lightColor;  
-        
+    vec3 specular = specularStrength * spec * lightColor;
+
     // calculate shadow
-    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);       
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color; 
-    
+    float shadow = ShadowCalculation(FragPosLightSpace, lightDir, Normal);
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
     FragColor = vec4(lighting, 1.0);
     //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

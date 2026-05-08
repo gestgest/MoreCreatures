@@ -138,13 +138,15 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
             int i11 = (z + 1) * vertsPerSide + (x + 1);
 
             //삼각형 1: i00, i10, i01
+            //cross 순서 주의: edge1=+X, edge2=+Z일 때 edge1×edge2 = X×Z = -Y (아래쪽).
+            //위쪽 노멀을 얻으려면 edge2×edge1 = Z×X = +Y가 되도록 인수 순서 swap.
             glm::vec3 n1 = glm::normalize(glm::cross(
-                positions[i10] - positions[i00],
-                positions[i01] - positions[i00]));
-            //삼각형 2: i10, i11, i01
+                positions[i01] - positions[i00],
+                positions[i10] - positions[i00]));
+            //삼각형 2: i10, i11, i01 — 같은 이유로 swap
             glm::vec3 n2 = glm::normalize(glm::cross(
-                positions[i11] - positions[i10],
-                positions[i01] - positions[i10]));
+                positions[i01] - positions[i10],
+                positions[i11] - positions[i10]));
 
             normals[i00] += n1;
             normals[i10] += n1 + n2;

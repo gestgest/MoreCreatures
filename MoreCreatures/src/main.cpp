@@ -32,7 +32,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 Camera camera(glm::vec3(10.0f, 10.0f, 10.0f));
-glm::vec3 lightPos(8.0f, 3.0f, 8.0f);
+glm::vec3 lightPos(5.0f, 3.0f, 5.0f);
 glm::vec3 lightColor(1.0, 1.0, 1.0);
 
 glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::vec3(0,1.0f,0.0f), glm::vec3(0,-1.0f,0.0f), glm::vec3(-1.0f,0.0f,-1.0f), glm::vec3(1.0f,0,1.0f) };

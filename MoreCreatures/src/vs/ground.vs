@@ -11,7 +11,6 @@ out vec4 FragPosLightSpace;
 //tangent space basis (월드 공간) — 프래그먼트에서 TBN으로 조립
 out vec3 T_world;
 out vec3 B_world;
-out vec3 N_world;
 
 //입력
 uniform mat4 model;
@@ -37,7 +36,6 @@ void main()
     Normal   = N;
     T_world  = T;
     B_world  = B;
-    N_world  = N;
 
     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
     FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
