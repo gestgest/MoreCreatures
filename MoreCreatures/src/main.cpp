@@ -11,6 +11,7 @@
 
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
+#include <GameObject/ChunkManager.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
@@ -54,7 +55,8 @@ std::vector<Almond*> almonds;
 
 GLFWwindow* window = nullptr;
 Ground* ground = nullptr;
-Terrain* terrain = nullptr;
+Terrain* terrain = nullptr;        //(레거시 — 사용 중단, ChunkManager가 대신함)
+ChunkManager* chunkManager = nullptr;
 Shader* depthShader = nullptr;
 unsigned int depthMapFBO = 0;
 unsigned int depthMap = 0;
@@ -118,7 +120,8 @@ int main()
     Shader groundShader("src/vs/ground.vs", "src/fs/ground.fs");
     depthShader = new Shader("src/vs/DepthShader.vs", "src/fs/DepthShader.fs");
 
-    terrain = new Terrain(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
+    //오픈월드 청크 관리자 — 시작 시 3x3 청크 생성
+    chunkManager = new ChunkManager(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
     Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5882353, 0.2941176, 0.0));
 
     unsigned int ground_texture;
@@ -131,14 +134,17 @@ int main()
     //shadow map
     depthProcessing(depthMapFBO, depthMap);
 
-    terrain->setTexture(ground_texture);
-    terrain->setNormalMap(normalMap);
+    //텍스처/노멀/그림자맵 ID를 ChunkManager에 저장 (load되는 새 청크에 자동 적용)
+    chunkManager->setTexture(ground_texture);
+    chunkManager->setNormalMap(normalMap);
+    chunkManager->setShadowMap(depthMap);
 
-    objects.push_back(terrain);
+    //초기 청크 9개 생성 — update()가 첫 호출 때 자동으로 viewRadius 범위 채움
+    chunkManager->update(mouse->getPosition(), objects);
+
     objects.push_back(mouse);
 
     mouse->setShadowMap(depthMap);
-    terrain->setShadowMap(depthMap);
 
     // HUD 초기화 — 식량/HP 게이지 5칸씩 표시
     hud = new HUD();
@@ -147,18 +153,18 @@ int main()
     hud->setHp(5);
 
     // === 아몬드 랜덤 스폰 ===
-    // terrain 좌표계: x,z 모두 [-half, +half] 범위 (gridSize=128, cellSize=1.0 → half=64)
-    // 가장자리는 5 유닛 안쪽으로 들여서 깔끔하게.
-    // y는 terrain->getHeightAt()으로 표면 위에 정확히 안착.
+    // 청크 영역(3x3 = chunkSize*1.5)에 맞춰 스폰 범위 확장.
+    // 청크 한 변 64 × viewRadius 1.5(여유) = 96.
+    // y는 ChunkManager::getHeightAt()으로 지형 표면에 안착.
+    //
+    // (Phase 3에서 청크별 절차 스폰으로 리팩터 예정. 지금은 고정 영역 + 고정 시드.)
     {
-        const int   numAlmonds = 20; // 아몬드 갯수
-        const float halfExtent = 64.0f;     //terrain.gridSize * cellSize / 2
+        const int   numAlmonds = 20;
+        const float halfExtent = 96.0f;    //3x3 청크 거의 전체 (chunkSize * 1.5)
         const float inset      = 5.0f;
         const float minXZ = -halfExtent + inset;
         const float maxXZ =  halfExtent - inset;
 
-        //고정 시드 사용 — 매 실행마다 같은 위치에 나오게. 디버깅 편의.
-        //랜덤 위치를 원하면 std::random_device 등으로 대체 가능.
         std::mt19937 rng(42);
         std::uniform_real_distribution<float> distXZ(minXZ, maxXZ);
 
@@ -166,7 +172,7 @@ int main()
         {
             float x = distXZ(rng);
             float z = distXZ(rng);
-            float y = terrain->getHeightAt(x, z);
+            float y = chunkManager->getHeightAt(x, z);
 
             Almond* almond = new Almond(mouseShader, glm::vec3(x, y, z));
             almond->setShadowMap(depthMap);
@@ -186,15 +192,19 @@ int main()
         UpdatePhysics(dt);
         UpdateHunger(dt);     //시간 경과로 식량 자동 감소
         UpdatePickup(dt);     //플레이어가 아몬드 근처면 먹기
+        chunkManager->update(player->getPosition(), objects);   //청크 동적 load/unload
         RenderShadowPass();
         Rendering();
     }
 
     //메모리 제거
+    //주의: 청크들은 objects 벡터가 소유 → 여기서 delete됨.
+    //chunkManager 자체는 빈 껍데기만 남으므로 별도 delete.
     for (int i = 0; i < objects.size(); i++)
     {
         delete objects[i];
     }
+    delete chunkManager;
     delete hud;
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

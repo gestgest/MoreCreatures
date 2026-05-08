@@ -7,6 +7,7 @@
 
 #include <header/camera.h>
 #include <GameObject/Mouse.h>
+#include <GameObject/ChunkManager.h>
 #include <UI/HUD.h>
 #include <Config.h>
 
@@ -17,6 +18,7 @@
 extern Camera camera;
 extern Mouse* player;
 extern HUD*   hud;
+extern ChunkManager* chunkManager;
 extern float  deltaTime;
 
 // 게임 재시작 함수 (main.cpp에 정의)
@@ -88,6 +90,13 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
     if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
     {
         camera.isThirdView = !camera.isThirdView;
+    }
+
+    //F1: [디버그] 청크 상태 콘솔에 덤프 — 활성 청크 목록, 메모리 추정 등
+    if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
+    {
+        if (chunkManager && player)
+            chunkManager->printDebugInfo(player->getPosition());
     }
 
     //R: 게임 재시작 (HP/식량/아몬드 모두 복구)

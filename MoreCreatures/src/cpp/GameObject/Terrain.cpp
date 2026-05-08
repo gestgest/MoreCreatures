@@ -75,6 +75,13 @@ Terrain::Terrain(Shader& shader, glm::vec3 color)
     initObject(&shader, color);
 }
 
+//청크 위치 지정 — 오픈월드 ChunkManager가 사용
+Terrain::Terrain(Shader& shader, glm::vec3 color, glm::vec2 center)
+{
+    chunkCenter = center;
+    initObject(&shader, color);
+}
+
 Terrain::~Terrain()
 {
     delete mesh;
@@ -88,7 +95,9 @@ float Terrain::getHeightAt(float worldX, float worldZ) const
 
 void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
 {
-    position = glm::vec3(0.0f, 0.0f, 0.0f);
+    //청크의 월드 위치 — 모델 매트릭스가 메시를 여기로 이동시킨다.
+    //단일 모드(chunkCenter=(0,0))면 원점에 위치, 청크 모드면 청크 중심에 위치.
+    position = glm::vec3(chunkCenter.x, 0.0f, chunkCenter.y);
     scale = glm::vec3(1.0f);
     isStatic = true;
     isActive = true;
@@ -110,19 +119,25 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     const int totalVerts = vertsPerSide * vertsPerSide;
 
     //1) 정점 위치를 노이즈로 생성
+    //
+    //   메시 좌표는 청크 로컬 (lx, lz) — 모델 매트릭스가 chunkCenter로 이동시킴.
+    //   하지만 노이즈 샘플링은 월드 좌표 (lx + chunkCenter.x, lz + chunkCenter.y)로 해야
+    //   인접 청크 경계에서 높이가 매끄럽게 이어진다 (같은 fbm 시드 + 같은 월드 좌표 → 같은 높이).
     std::vector<glm::vec3> positions(totalVerts);
     for (int z = 0; z <= n; ++z)
     {
         for (int x = 0; x <= n; ++x)
         {
-            //바둑판처럼 왼쪽 뒤부터 좌표 설정
-            float wx = (x - n * 0.5f) * cellSize;
-            float wz = (z - n * 0.5f) * cellSize;
+            //로컬 좌표 — 청크 중심 기준 [-half, +half]
+            float lx = (x - n * 0.5f) * cellSize;
+            float lz = (z - n * 0.5f) * cellSize;
 
-            //랜덤 값은 h값만 주면 된다.
-            float h = fbm(wx * noiseScale, wz * noiseScale, seed, octaves) * heightScale;
+            //노이즈는 월드 좌표로 샘플 — 청크 경계 매끄럽게 이어짐
+            float worldX = lx + chunkCenter.x;
+            float worldZ = lz + chunkCenter.y;
+            float h = fbm(worldX * noiseScale, worldZ * noiseScale, seed, octaves) * heightScale;
 
-            positions[z * vertsPerSide + x] = glm::vec3(wx, h, wz);
+            positions[z * vertsPerSide + x] = glm::vec3(lx, h, lz);
         }
     }
 

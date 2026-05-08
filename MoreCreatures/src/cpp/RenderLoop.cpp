@@ -7,6 +7,7 @@
 #include <GameObject/GameObject.h>
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
+#include <GameObject/ChunkManager.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
@@ -33,6 +34,7 @@ extern std::vector<Almond*> almonds;
 extern GLFWwindow* window;
 extern Ground* ground;
 extern Terrain* terrain;
+extern ChunkManager* chunkManager;
 extern Shader* depthShader;
 extern unsigned int depthMapFBO;
 extern unsigned int depthMap;
@@ -162,6 +164,12 @@ void UpdatePhysics(float dt)
             {
                 continue;
             }
+
+            //둘 다 static이면 충돌 검사 건너뜀 — 청크끼리, 청크-아몬드 등 의미 없는 검사 제외
+            //(아몬드는 isStatic=true이고 콜라이더도 없어서 어차피 아래에서 reject되지만,
+            // 청크 9개 × 청크 9개 = 36 페어가 모두 TerrainCollider 사이의 heightfield 비교로
+            // 가지 않게 명시적으로 차단)
+            if (objects[i]->getIsStatic() && objects[j]->getIsStatic()) continue;
 
             Collider* a = objects[i]->getCollider();
             Collider* b = objects[j]->getCollider();
