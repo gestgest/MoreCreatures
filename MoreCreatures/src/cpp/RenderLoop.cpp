@@ -8,6 +8,7 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
 #include <Manager/ChunkManager.h>
+#include <Manager/AlmondPool.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
@@ -29,7 +30,7 @@ extern glm::vec3 lightColor;
 
 extern Mouse* player;
 extern std::vector<GameObject*> objects;
-extern std::vector<Almond*> almonds;
+extern AlmondPool* almondPool;   //아몬드는 풀이 단독 소유 — UpdatePickup에서 getAllAlmonds()로 순회
 
 extern GLFWwindow* window;
 extern Ground* ground;
@@ -332,9 +333,11 @@ void UpdatePickup(float dt)
 
     glm::vec3 playerPos = player->getPosition();
 
-    for (Almond* a : almonds)
+    if (!almondPool) return;
+    for (Almond* a : almondPool->getAllAlmonds())
     {
         //이미 먹은 건 건너뛰기 — 같은 아몬드가 다시 먹히지 않게
+        //(풀의 비활성 슬롯도 isActive=false라 같은 분기에서 자연스럽게 스킵됨)
         if (!a->getIsActive()) continue;
 
         glm::vec3 ap = a->getPosition();

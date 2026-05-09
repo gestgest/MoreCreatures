@@ -12,6 +12,7 @@
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
 #include <Manager/ChunkManager.h>
+#include <Manager/AlmondPool.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
@@ -25,6 +26,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <algorithm>   //std::find — 종료 시 objects에서 풀 Almond들 빼낼 때
 
 #define STB_IMAGE_IMPLEMENTATION
 //std_image.h를 이용해서 이미지 열려면 위에 이거 정의해야함
@@ -52,7 +54,9 @@ glm::vec3 dir[6] = { glm::vec3(-1.0f,0.0f,1.0f), glm::vec3(1.0f,0,-1.0f), glm::v
 
 Mouse* player;
 std::vector<GameObject*> objects;
-std::vector<Almond*> almonds;
+//almonds 전역은 AlmondPool이 소유. UpdatePickup/RestartGame에서 pool->getAllAlmonds()로 접근.
+//(레거시 std::vector<Almond*> almonds는 제거됨 — pool 단일 소유로 일원화)
+AlmondPool* almondPool = nullptr;
 
 
 GLFWwindow* window = nullptr;
@@ -174,37 +178,23 @@ int main()
     hud->setHp(5);
     initTimer.report("HUD init");
 
-    // === 아몬드 랜덤 스폰 ===
-    // 청크 영역(3x3 = chunkSize*1.5)에 맞춰 스폰 범위 확장.
-    // 청크 한 변 64 × viewRadius 1.5(여유) = 96.
-    // y는 ChunkManager::getHeightAt()으로 지형 표면에 안착.
+    // === 아몬드 풀링 시스템 ===
+    // 무한 월드라 새 청크마다 아몬드를 new/delete하면 spike + GPU 메모리 단편화.
+    // 시작 시 POOL_SIZE개를 한 번에 만들고, 이후 sliding window로 청크 따라 재배치.
+    //   - 같은 청크는 deterministic 시드로 항상 같은 자리에 5개 spawn
+    //   - 청크 떠나면 슬롯 회수, 새 청크가 그 슬롯 재사용
+    //   - 먹은 아몬드도 청크 떠났다 돌아오면 자동 부활 (그 자리 다시 spawn)
     //
-    // (Phase 3에서 청크별 절차 스폰으로 리팩터 예정. 지금은 고정 영역 + 고정 시드.)
+    // 풀의 Almond* 들은 objects 벡터에 등록해서 매 프레임 RenderShadow + Rendering에서 그려짐.
+    // (isActive=false인 슬롯은 Almond::drawGameObject/drawShadow가 알아서 스킵)
+    almondPool = new AlmondPool(mouseShader, depthMap, *chunkManager);
+    for (Almond* a : almondPool->getAllAlmonds())
     {
-        const int   numAlmonds = 20;
-        const float halfExtent = 96.0f;    //3x3 청크 거의 전체 (chunkSize * 1.5)
-        const float inset      = 5.0f;
-        const float minXZ = -halfExtent + inset;
-        const float maxXZ =  halfExtent - inset;
-
-        std::mt19937 rng(42);
-        std::uniform_real_distribution<float> distXZ(minXZ, maxXZ);
-
-        for (int i = 0; i < numAlmonds; ++i)
-        {
-            float x = distXZ(rng);
-            float z = distXZ(rng);
-            float y = chunkManager->getHeightAt(x, z);
-
-            Almond* almond = new Almond(mouseShader, glm::vec3(x, y, z));
-            almond->setShadowMap(depthMap);
-            objects.push_back(almond);
-            almonds.push_back(almond);
-        }
-
-        std::cout << "Spawned " << numAlmonds << " almonds" << std::endl;
+        objects.push_back(a);
     }
-    initTimer.report("아몬드 스폰 (20개)");
+    //첫 update — 시작 청크 9개에 45개 아몬드 모두 배치
+    almondPool->update(mouse->getPosition(), objects);
+    initTimer.report("AlmondPool 초기화 + 첫 spawn");
     std::cout << "[init] === 총 초기화 시간: " << initTimer.total()
               << " ms === 게임 루프 진입" << std::endl;
 
@@ -224,17 +214,32 @@ int main()
         UpdateHunger(dt);     //시간 경과로 식량 자동 감소
         UpdatePickup(dt);     //플레이어가 아몬드 근처면 먹기
         chunkManager->update(player->getPosition(), objects);   //청크 동적 load/unload
+        almondPool->update(player->getPosition(), objects);     //아몬드 풀링 — 청크 따라 재배치
         RenderShadowPass();
         Rendering();
     }
 
-    //메모리 제거
-    //주의: 청크들은 objects 벡터가 소유 → 여기서 delete됨.
-    //chunkManager 자체는 빈 껍데기만 남으므로 별도 delete.
-    for (int i = 0; i < objects.size(); i++)
+    //=== 메모리 제거 — 소유권 주의 ===
+    //
+    // objects 벡터에는 두 종류 포인터가 섞여 있음:
+    //   1) Terrain*      → ChunkManager가 만들지만 소유권은 objects에 위임 → 여기서 delete
+    //   2) Almond*       → AlmondPool이 단독 소유 → objects에서 delete하면 double-free
+    //   3) Mouse* (player)→ main에서 만든 단일 인스턴스 → 여기서 delete
+    //
+    // 그래서 풀의 Almond*들을 먼저 objects에서 빼낸 뒤 objects를 정리한다.
+    {
+        const auto& pooled = almondPool->getAllAlmonds();
+        for (Almond* a : pooled)
+        {
+            auto it = std::find(objects.begin(), objects.end(), static_cast<GameObject*>(a));
+            if (it != objects.end()) objects.erase(it);
+        }
+    }
+    for (int i = 0; i < (int)objects.size(); i++)
     {
         delete objects[i];
     }
+    delete almondPool;       //AlmondPool 소멸자가 풀 안 Almond* 모두 정리
     delete chunkManager;
     delete hud;
 
@@ -264,16 +269,9 @@ void RestartGame()
     hud->setFood(hud->getMaxFood());
     hud->setHp(hud->getMaxHp());
 
-    //2. 모든 아몬드 부활 — 먹어서 isActive=false였던 것들 다 살림
-    int revived = 0;
-    for (Almond* a : almonds)
-    {
-        if (!a->getIsActive())
-        {
-            a->setIsActive(true);
-            revived++;
-        }
-    }
+    //2. 모든 아몬드 부활 — 풀이 inUse 중인 슬롯만 살림 (비활성 슬롯은 어차피 안 보이니 무관)
+    //   풀에 위임한 이유: "현재 active한 청크에 spawn된 것만"이라는 의미가 풀 내부에만 있음
+    int revived = almondPool ? almondPool->reviveEatenAlmonds() : 0;
 
     //3. 플레이어 위치/속도 리셋 — Mouse 초기 spawn과 동일 (Mouse.cpp의 init 참조)
     player->setPosition(glm::vec3(0.0f, 10.0f, 0.0f));

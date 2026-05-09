@@ -93,6 +93,9 @@
     <ClCompile Include="src\cpp\Manager\ChunkManager.cpp">
       <Filter>소스 파일\cpp\Manager</Filter>
     </ClCompile>
+    <ClCompile Include="src\cpp\Manager\AlmondPool.cpp">
+      <Filter>소스 파일\cpp\Manager</Filter>
+    </ClCompile>
     <ClCompile Include="src\cpp\GameObject\Almond.cpp">
       <Filter>소스 파일\cpp\GameObject</Filter>
     </ClCompile>
@@ -129,6 +132,9 @@
       <Filter>헤더 파일\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="src\header\Manager\ChunkManager.h">
+      <Filter>헤더 파일\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\Manager\AlmondPool.h">
       <Filter>헤더 파일\Manager</Filter>
     </ClInclude>
     <ClInclude Include="src\header\GameObject\GameObject.h">
