@@ -6,6 +6,7 @@ open world survival game with OpenGL
 ## 프로젝트 정보
 ### 기간
 2026년 1월 14일 ~ 1월 16일 (3일)
+2026년 4월 27일 ~ 5월 11일 (14일)
 
 ### 인원
 1인 개발
@@ -19,7 +20,9 @@ open world survival game with OpenGL
 - 중력
 - 물체 오브젝트 충돌 감지 알고리즘 (AABB 알고리즘)
 - obj 로더
-- 청크 시스템
+- 지형
+  - FBM
+  - 청크 시스템
 - UI
 
 ### 그래픽스
@@ -150,5 +153,12 @@ bool isCollisionEnter(GameObject* object)
 ### 그림자 매핑
 <img width="639" height="436" alt="image" src="https://github.com/user-attachments/assets/6da02df1-a017-4cbf-bf63-510ce9a8504c" />
 
-### 
+
+### 노멀 맵
+TBN 행렬을 이용해 경사진 지형에서도 자연스러운 텍스쳐 재질을 구현했다.
+<img width="1043" height="658" alt="image" src="https://github.com/user-attachments/assets/795f984d-3bc0-4617-8a1e-8f9229e198b2" /><br>
+before<br><br>
+<img width="861" height="574" alt="image" src="https://github.com/user-attachments/assets/e8cf0df2-704c-4bfa-8d7f-585ccdd67de4" /><br>
+after<br>
+
 
