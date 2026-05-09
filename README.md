@@ -3,7 +3,7 @@ open world survival game with OpenGL
 - 1인칭 / 3인칭 시점 캐릭터 조작과 카메라 추적, 기본 렌더링 파이프라인을 구현한 C++/OpenGL 데모 프로젝트입니다.
 
 ---
-## 프로젝트 정보
+# 프로젝트 정보
 ### 기간
 2026년 1월 14일 ~ 1월 16일 (3일)
 2026년 4월 27일 ~ 5월 11일 (14일)
@@ -11,6 +11,10 @@ open world survival game with OpenGL
 ### 인원
 1인 개발
 
+### 개발로그
+[개발로그](https://velog.io/@gestgest/series/OpenGL)
+
+---
 # 구현한 기술
 ### 게임 플레이
 - 이동
@@ -41,37 +45,6 @@ open world survival game with OpenGL
 ![bandicam 2026-03-05 20-48-15-421 (1)](https://github.com/user-attachments/assets/86e55647-b020-4b16-a728-cbfa34af6ad5)
 <img width="1092" height="653" alt="image" src="https://github.com/user-attachments/assets/6516d90b-112c-45a9-b821-dd424f188889" />
 trackingPos 벡터를 이용하여 플레이어의 앞 벡터를 구했습니다.
-```
-void updateCameraPosition(glm::vec3 player_pos)
-{
-    trackingPos.x = cos(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
-    trackingPos.y = -sin(glm::radians(Pitch));
-    trackingPos.z = sin(glm::radians(Yaw)) * -cos(glm::radians(Pitch));
-
-    //3인칭 뷰
-    if (isThirdView)
-    {
-        trackingPos *= Zoom;
-
-        //trackingPos는 Back;
-        Position = player_pos + trackingPos;
-
-        //카메라가 플레이어를 쳐다보는
-        glm::vec3 frontCameraVector = player_pos - Position;
-        updateCameraVectors(frontCameraVector);
-    }
-    //1인칭 뷰
-    else
-    {
-        updateCameraVectors(-trackingPos);
-        float m = 5;
-        //Position = player_pos + Front;
-        Position = player_pos + glm::vec3(Front.x * m, Front.y * m + 5.0, Front.z * m);
-    }
-}
-
-```
-
 
 ### 중력
 ![bandicam 2026-03-05 20-48-15-421 (2)](https://github.com/user-attachments/assets/c2074e8e-499e-4706-8b82-5fa7f808d810)
@@ -117,36 +90,16 @@ while (!glfwWindowShouldClose(window))
 
 ### AABB 알고리즘
 물체 오브젝트 충돌 감지 알고리즘
-```
-bool isCollisionEnter(GameObject* object)
-{
-    if (!(this->getIsActive()) || !(object->getIsActive()))
-    {
-        return false;
-    }
+
+## UI
+<img width="1197" height="800" alt="image" src="https://github.com/user-attachments/assets/4efd8327-c1e4-4938-9282-3b412a59d7af" />
+
+# 지형 알고리즘
+### FBM, Chunk System
+<img width="1196" height="797" alt="image" src="https://github.com/user-attachments/assets/b54dafcf-5454-45ef-9573-8d7d3b053403" />
 
 
-    // ==이어도 0 ~ 10, 0 ~ 10, 0 ~ 10 즉, 3개가 같아야함 ==> 하나라도 다르면 물체가 만날 수 없음
-    //x비교
-    if (!isInBoundary(this->position.x, object->position.x, this->scale.x, object->scale.x))
-    {
-        return false;
-    }
 
-    if (!isInBoundary(this->position.y, object->position.y, this->scale.y, object->scale.y))
-    {
-        return false;
-    }
-
-    if (!isInBoundary(this->position.z, object->position.z, this->scale.z, object->scale.z))
-    {
-        return false;
-    }
-    //std::cout << object->position.y;
-    return true;
-}
-
-```
 
 ---
 # 그래픽스
