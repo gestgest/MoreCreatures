@@ -75,7 +75,7 @@ void ChunkManager::update(const glm::vec3& playerPos, std::vector<GameObject*>& 
 
     //=== 1) 원하는 청크 인덱스 집합 만들기 ===
     //(중심 ± viewRadius 범위)
-    std::vector<glm::ivec2> desired; //이게 기존에 있는거?
+    std::vector<glm::ivec2> desired; //청크 (x,z) 3x3 => 즉 9개.
     setDesired(desired, newCenter);
 
 
@@ -149,11 +149,18 @@ std::vector<glm::ivec2> ChunkManager::unloadFarChunks(const std::vector<glm::ive
         bool inDesired = false;
         for (const auto& d : desired)
         {
-            if (d == idx) { inDesired = true; break; }
+            if (d == idx)
+            {
+                inDesired = true; 
+                break; 
+            }
         }
-        if (inDesired) continue;
+        //자기 기준으로 내부 청크라면 무시
+        if (inDesired) 
+            continue;
 
-        //unload: objects에서 제거 → delete → ChunkManager 내부에서도 제거
+        //밖을 벗어났다면
+
         Terrain* old = chunks[i];
 
         //objects 벡터에서 해당 포인터 찾아 제거
@@ -161,8 +168,10 @@ std::vector<glm::ivec2> ChunkManager::unloadFarChunks(const std::vector<glm::ive
         if (it != objects.end()) objects.erase(it);
 
         delete old;
+
         chunks.erase(chunks.begin() + i);
         chunkIndices.erase(chunkIndices.begin() + i);
+        
         unloadedList.push_back(idx);
     }
     return unloadedList;
