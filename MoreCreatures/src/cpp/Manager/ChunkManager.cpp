@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <chrono>     //std::chrono::milliseconds — future.wait_for(0ms) 비차단 폴링용
 #include <iostream>
 
 
@@ -67,26 +68,131 @@ void ChunkManager::update(const glm::vec3& playerPos, std::vector<GameObject*>& 
 {
     glm::ivec2 newCenter = worldToChunk(playerPos.x, playerPos.z);
 
-    //이미 같은 중심 청크면 작업 없음 — 매 프레임 호출되지만 99% 케이스에서 즉시 리턴
-    if (initialized && newCenter == currentCenter) return;
+    //중심 변경 여부 — early return 못 함 (pending future가 매 프레임 폴링돼야 하니까)
+    bool centerChanged = (!initialized || newCenter != currentCenter);
 
-    initialized = true;
-    currentCenter = newCenter;
+    std::vector<glm::ivec2> unloadedList;   //이번 호출의 변동 (출력용)
+    std::vector<glm::ivec2> loadedList;
 
-    //=== 1) 원하는 청크 인덱스 집합 만들기 ===
-    //(중심 ± viewRadius 범위)
-    std::vector<glm::ivec2> desired; //청크 (x,z) 3x3 => 즉 9개.
-    setDesired(desired, newCenter);
+    if (centerChanged)
+    {
+        initialized = true;
+        currentCenter = newCenter;
+
+        //=== 1) 원하는 청크 인덱스 집합 만들기 ===
+        std::vector<glm::ivec2> desired; //청크 (x,z) 3x3 => 즉 9개.
+        setDesired(desired, newCenter);
+
+        //2) 멀어진 청크 unload (즉시 — delete만 하면 되니 가벼움)
+        unloadedList = unloadFarChunks(desired, objects);
+
+        //3) 새 청크는 비동기 의뢰만 (이번 프레임에 안 만들어짐, 워커 스레드에 작업 위임)
+        requestLoadChunks(desired);
+    }
+
+    //=== 매 프레임: pending 큐 폴링 ===
+    //워커가 끝낸 청크가 있으면 메인 스레드에서 GL 업로드 (프레임당 maxUploadsPerFrame 개씩)
+    //→ 9개 동시 spike 대신 9프레임에 분산 → "응답없음" 사라짐
+    loadedList = processPendingChunks(objects);
+
+    //4) 변동 있을 때만 출력
+    if (!unloadedList.empty() || !loadedList.empty())
+    {
+        printChunkInfo(newCenter, unloadedList, loadedList);
+    }
+}
 
 
-    //2) 멀어진 청크 unload
-    std::vector<glm::ivec2> unloadedList = unloadFarChunks(desired, objects);
+//=== Step 2: 비동기 청크 로딩 — 워커 의뢰 ===
+//desired 안의 새 청크 좌표들에 대해 std::async로 워커 스레드에 buildMeshData 작업 위임.
+//바로 리턴 — 메인 프레임 안 멈춤.
+void ChunkManager::requestLoadChunks(const std::vector<glm::ivec2>& desired)
+{
+    for (const auto& d : desired)
+    {
+        if (findChunk(d) >= 0) continue;   //이미 chunks에 있음
 
-    //3) 새 청크 load
-    std::vector<glm::ivec2> loadedList = loadChunks(desired, objects);   //로그용
+        //이미 pending 중인지 확인 — 같은 청크 두 번 의뢰 방지
+        bool inPending = false;
+        for (const auto& p : pendingFutures)
+        {
+            if (p.idx == d) { inPending = true; break; }
+        }
+        if (inPending) continue;
 
-    //4) 청크 정보 출력
-    printChunkInfo(newCenter, unloadedList, loadedList);
+        //비동기 의뢰: launch::async 명시 — 안 그러면 deferred(메인에서 실행)될 수도 있음
+        glm::vec2 worldCenter(d.x * chunkSize, d.y * chunkSize);
+
+        PendingChunk pc;
+        pc.idx = d;
+        pc.future = std::async(std::launch::async,
+                               &Terrain::buildMeshData,
+                               worldCenter,
+                               Terrain::GRID_SIZE,
+                               Terrain::CELL_SIZE,
+                               Terrain::HEIGHT_SCALE,
+                               Terrain::NOISE_SCALE,
+                               Terrain::OCTAVES,
+                               Terrain::SEED);
+        //std::future는 move-only — push_back에 std::move 필수 (안 그러면 컴파일 에러)
+        pendingFutures.push_back(std::move(pc));
+    }
+}
+
+
+//=== Step 2: 비동기 청크 로딩 — 결과 회수 + GL 업로드 ===
+//pendingFutures 폴링 → ready된 것들을 메인 스레드에서 Terrain 객체 생성 (Mesh GL 업로드).
+//프레임당 maxUploadsPerFrame 개로 제한해서 spike 분산.
+std::vector<glm::ivec2> ChunkManager::processPendingChunks(std::vector<GameObject*>& objects)
+{
+    std::vector<glm::ivec2> loadedList;
+    int processed = 0;
+
+    for (auto it = pendingFutures.begin();
+         it != pendingFutures.end() && processed < maxUploadsPerFrame; )
+    {
+        //비차단 폴링 — wait_for(0ms): 워커 끝났으면 ready, 아니면 즉시 리턴
+        //(future.get()을 그냥 부르면 메인 스레드 차단 → 비동기 의미 사라짐)
+        if (it->future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+        {
+            ++it;
+            continue;
+        }
+
+        //ready! 데이터 회수 (워커 스레드에서 만든 정점/인덱스 배열)
+        glm::ivec2 d = it->idx;
+        ChunkMeshData md = it->future.get();
+
+        //플레이어가 빠르게 움직여 이 청크가 이미 시야 밖으로 나갔는지 확인
+        //(viewRadius 안인지) — 밖이면 결과 폐기, 안이면 GL 업로드
+        bool inRange = (std::abs(d.x - currentCenter.x) <= viewRadius &&
+                        std::abs(d.y - currentCenter.y) <= viewRadius);
+
+        if (!inRange)
+        {
+            //이미 멀어짐 — 만들 필요 없음, md는 그냥 소멸
+            it = pendingFutures.erase(it);
+            continue;
+        }
+
+        //GL 업로드 (메인 스레드 only) — 비동기 생성자: 받은 md로 Mesh 만들기만
+        glm::vec2 worldCenter(d.x * chunkSize, d.y * chunkSize);
+        Terrain* chunk = new Terrain(*shader, color, worldCenter, md);
+
+        if (textureId)   chunk->setTexture(textureId);
+        if (normalMapId) chunk->setNormalMap(normalMapId);
+        if (shadowMapId) chunk->setShadowMap(shadowMapId);
+
+        chunks.push_back(chunk);
+        chunkIndices.push_back(d);
+        objects.push_back(chunk);
+        loadedList.push_back(d);
+
+        it = pendingFutures.erase(it);
+        processed++;
+    }
+
+    return loadedList;
 }
 
 void ChunkManager::printChunkInfo(glm::ivec2 newCenter, std::vector<glm::ivec2>& unloadedList, std::vector<glm::ivec2> & loadedList) const

@@ -82,6 +82,36 @@ Terrain::Terrain(Shader& shader, glm::vec3 color, glm::vec2 center)
     initObject(&shader, color);
 }
 
+//=== Step 2: 비동기 청크 로딩용 생성자 ===
+//워커 스레드에서 만든 ChunkMeshData를 받아 GL 업로드만 함.
+//기존 initObject와 같은 일을 하지만 buildMeshData를 호출하지 않음 (이미 워커가 만든 거 사용).
+Terrain::Terrain(Shader& shader, glm::vec3 color, glm::vec2 center, const ChunkMeshData& md)
+{
+    chunkCenter = center;
+
+    //위치/상태 — initObject 앞부분과 동일
+    position = glm::vec3(chunkCenter.x, 0.0f, chunkCenter.y);
+    scale = glm::vec3(1.0f);
+    isStatic = true;
+    isActive = true;
+
+    //heightfield 충돌체 — initObject와 동일 (콜라이더는 Terrain 객체 자체에 묶이므로 메인에서 생성)
+    float worldExtent = gridSize * cellSize;
+    float half = worldExtent * 0.5f;
+    glm::vec3 localMin(-half, -1e6f, -half);
+    glm::vec3 localMax( half, heightScale, half);
+    TerrainCollider* col = new TerrainCollider(this, this, localMin, localMax, /*samplesPerSide=*/3);
+    setCollider(col);
+
+    //GL 업로드 — 받은 md로 바로 (워커가 미리 만들어둔 정점/인덱스 데이터)
+    Mesh* m = new Mesh(shader, color);
+    m->setupIndexedTexcoords(
+        md.vertexData.data(), (int)(md.vertexData.size() * sizeof(float)),
+        md.indices.data(), (int)md.indices.size()
+    );
+    setMesh(m);
+}
+
 Terrain::~Terrain()
 {
     delete mesh;
@@ -114,6 +144,38 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     TerrainCollider* col = new TerrainCollider(this, this, localMin, localMax, /*samplesPerSide=*/3);
     setCollider(col);
 
+    //=== CPU 데이터 빌드 (Step 1에서 정적 함수로 분리 — 추후 워커 스레드로 옮길 부분) ===
+    //이 호출 안에서 정점 위치(노이즈), 노멀, 탄젠트, vertexData/indices 패킹까지 모두 끝남.
+    ChunkMeshData md = buildMeshData(chunkCenter, gridSize, cellSize,
+                                     heightScale, noiseScale, octaves, seed);
+
+    //=== GL 업로드 (메인 스레드 only) ===
+    //Mesh 생성과 setupIndexedTexcoords는 VAO/VBO/EBO 만들고 glBufferData 호출 — GL 컨텍스트 필수.
+    //그래서 비동기로 옮기면 안 됨. 워커가 만든 md만 받아서 여기서 업로드.
+    if (shaderPtr)
+    {
+        Mesh* m = new Mesh(*shaderPtr, color);
+        m->setupIndexedTexcoords(
+            md.vertexData.data(), (int)(md.vertexData.size() * sizeof(float)),
+            md.indices.data(), (int)md.indices.size()
+        );
+        setMesh(m);
+    }
+}
+
+
+// === Step 1: CPU 데이터만 만드는 정적 함수 ===
+// 어떤 스레드에서든 호출 가능 — GL 호출 절대 없음.
+// fbm/valueNoise/hash01은 순수 함수(전역 상태 없음)라 thread-safe.
+// Step 2에서 std::async로 이 함수를 워커 스레드에 넘길 예정.
+ChunkMeshData Terrain::buildMeshData(glm::vec2 chunkCenter,
+                                     int   gridSize,
+                                     float cellSize,
+                                     float heightScale,
+                                     float noiseScale,
+                                     int   octaves,
+                                     int   seed)
+{
     const int n = gridSize; //128 => 격자라고 한다면
     const int vertsPerSide = n + 1; // => 바둑알마냥 격자 꼭지점 4개 의미
     const int totalVerts = vertsPerSide * vertsPerSide;
@@ -183,8 +245,8 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     }
 
     //3) 정점 데이터 패킹: pos3 + normal3 + tex2 + tangent3 = 11 floats
-    std::vector<float> vertexData;
-    vertexData.reserve(totalVerts * 11);
+    ChunkMeshData out;
+    out.vertexData.reserve(totalVerts * 11);
     for (int z = 0; z <= n; ++z)
     {
         for (int x = 0; x <= n; ++x)
@@ -194,26 +256,25 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
             const glm::vec3& nrm = normals[i];
             const glm::vec3& t = tangents[i];
 
-            vertexData.push_back(p.x);
-            vertexData.push_back(p.y);
-            vertexData.push_back(p.z);
-            vertexData.push_back(nrm.x);
-            vertexData.push_back(nrm.y);
-            vertexData.push_back(nrm.z);
+            out.vertexData.push_back(p.x);
+            out.vertexData.push_back(p.y);
+            out.vertexData.push_back(p.z);
+            out.vertexData.push_back(nrm.x);
+            out.vertexData.push_back(nrm.y);
+            out.vertexData.push_back(nrm.z);
             //텍스처 타일링: 4셀당 1 UV — 너무 잦은 반복으로 인한 자글거림(aliasing) 방지
             const float uvScale = 0.25f;
-            vertexData.push_back((float)x * uvScale);
-            vertexData.push_back((float)z * uvScale);
+            out.vertexData.push_back((float)x * uvScale);
+            out.vertexData.push_back((float)z * uvScale);
             //tangent (월드 공간)
-            vertexData.push_back(t.x);
-            vertexData.push_back(t.y);
-            vertexData.push_back(t.z);
+            out.vertexData.push_back(t.x);
+            out.vertexData.push_back(t.y);
+            out.vertexData.push_back(t.z);
         }
     }
 
     //4) 인덱스 버퍼: 셀 하나당 삼각형 2개 = 인덱스 6개
-    std::vector<unsigned int> indices;
-    indices.reserve(n * n * 6);
+    out.indices.reserve(n * n * 6);
     for (int z = 0; z < n; ++z)
     {
         for (int x = 0; x < n; ++x)
@@ -223,26 +284,17 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
             unsigned int i01 = (z + 1) * vertsPerSide + x;
             unsigned int i11 = (z + 1) * vertsPerSide + (x + 1);
 
-            indices.push_back(i00);
-            indices.push_back(i10);
-            indices.push_back(i01);
+            out.indices.push_back(i00);
+            out.indices.push_back(i10);
+            out.indices.push_back(i01);
 
-            indices.push_back(i10);
-            indices.push_back(i11);
-            indices.push_back(i01);
+            out.indices.push_back(i10);
+            out.indices.push_back(i11);
+            out.indices.push_back(i01);
         }
     }
 
-    //5)
-    if (shaderPtr)
-    {
-        Mesh* m = new Mesh(*shaderPtr, color);
-        m->setupIndexedTexcoords(
-            vertexData.data(), (int)(vertexData.size() * sizeof(float)),
-            indices.data(), (int)indices.size()
-        );
-        setMesh(m);
-    }
+    return out;
 }
 
 void Terrain::setTexture(unsigned int& texture)

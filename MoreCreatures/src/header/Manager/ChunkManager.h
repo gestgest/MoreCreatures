@@ -5,6 +5,7 @@
 #include <header/shader.h>
 
 #include <vector>
+#include <future>      //std::async, std::future — 비동기 청크 로딩용
 #include <glm/glm.hpp>
 
 // 오픈월드 청크 관리자.
@@ -80,6 +81,25 @@ private:
         std::vector<class GameObject*>& objects);
     std::vector<glm::ivec2> loadChunks(const std::vector<glm::ivec2>& desired,
         std::vector<class GameObject*>& objects);
+
+    //=== Step 2: 비동기 청크 로딩 ===
+    //워커 스레드에서 buildMeshData를 돌리는 동안 메인 스레드는 멈추지 않음.
+    //ready된 결과만 메인에서 GL 업로드.
+    struct PendingChunk
+    {
+        glm::ivec2 idx;
+        std::future<ChunkMeshData> future;   //워커가 만들고 있는 메시 데이터
+    };
+    std::vector<PendingChunk> pendingFutures;
+
+    //한 프레임에 GL 업로드할 최대 청크 수 — spike 분산. 1이면 가장 부드러움, 늘리면 더 빨리 채워짐.
+    int maxUploadsPerFrame = 1;
+
+    //새 청크 좌표들에 대해 std::async로 워커 의뢰 — pendingFutures에 추가
+    void requestLoadChunks(const std::vector<glm::ivec2>& desired);
+
+    //pending 큐 폴링 — ready된 future들을 메인 스레드에서 GL 업로드 (프레임당 maxUploadsPerFrame 개)
+    std::vector<glm::ivec2> processPendingChunks(std::vector<class GameObject*>& objects);
 };
 
 #endif
