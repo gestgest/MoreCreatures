@@ -43,7 +43,7 @@ public:
     //   - 활성 청크 갯수, 인덱스 목록
     //   - 플레이어 위치 / 플레이어 청크
     //   - 청크당 추정 메모리 + 총 메모리
-    void printDebugInfo(const glm::vec3& playerPos) const;
+    void printChunkMemory(const glm::vec3& playerPos) const;
 
 private:
     Shader* shader = nullptr;       //새 청크 생성 시 재사용
@@ -65,11 +65,21 @@ private:
     float chunkSize = 64.0f;   //Terrain의 gridSize*cellSize와 일치
     int   viewRadius = 1;      //±N 청크. 1이면 3x3 = 9개
 
-    //=== 헬퍼 ===
+
     //월드 좌표 → 청크 인덱스. 청크 중심 ±chunkSize/2 범위가 그 청크에 속함
     glm::ivec2 worldToChunk(float worldX, float worldZ) const;
+    
     //청크 인덱스가 chunks 벡터에서 몇 번째인지 (-1이면 없음)
     int        findChunk(glm::ivec2 idx) const;
+    void setDesired(std::vector<glm::ivec2>& desired, glm::ivec2 newCenter);
+
+
+    void printChunkInfo(glm::ivec2 newCenter, std::vector<glm::ivec2>& unloadedList, std::vector<glm::ivec2>& loadedList) const;
+
+    std::vector<glm::ivec2> unloadFarChunks(const std::vector<glm::ivec2>& desired,
+        std::vector<class GameObject*>& objects);
+    std::vector<glm::ivec2> loadChunks(const std::vector<glm::ivec2>& desired,
+        std::vector<class GameObject*>& objects);
 };
 
 #endif

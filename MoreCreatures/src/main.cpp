@@ -11,7 +11,7 @@
 
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
-#include <GameObject/ChunkManager.h>
+#include <Manager/ChunkManager.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
@@ -206,6 +206,7 @@ int main()
     }
     delete chunkManager;
     delete hud;
+
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();

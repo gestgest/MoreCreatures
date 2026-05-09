@@ -7,7 +7,7 @@
 
 #include <header/camera.h>
 #include <GameObject/Mouse.h>
-#include <GameObject/ChunkManager.h>
+#include <Manager/ChunkManager.h>
 #include <UI/HUD.h>
 #include <Config.h>
 
@@ -96,7 +96,7 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
     if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
     {
         if (chunkManager && player)
-            chunkManager->printDebugInfo(player->getPosition());
+            chunkManager->printChunkMemory(player->getPosition());
     }
 
     //R: 게임 재시작 (HP/식량/아몬드 모두 복구)

@@ -7,7 +7,7 @@
 #include <GameObject/GameObject.h>
 #include <GameObject/Ground.h>
 #include <GameObject/Terrain.h>
-#include <GameObject/ChunkManager.h>
+#include <Manager/ChunkManager.h>
 #include <GameObject/Mouse.h>
 #include <GameObject/Almond.h>
 
