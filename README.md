@@ -23,11 +23,14 @@ open world survival game with OpenGL
   - 화면 스크롤 줌
 - 중력
 - 물체 오브젝트 충돌 감지 알고리즘 (AABB 알고리즘)
+- UI
+
+### 로딩
+- 비동기 로드
 - obj 로더
 - 지형
   - **FBM**
   - **청크 시스템**
-- UI
 
 ### 그래픽스
 - **그림자, FSM**
