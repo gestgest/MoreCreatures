@@ -10,13 +10,22 @@ open world survival game with OpenGL
 ### 인원
 1인 개발
 
-### 구현한 기술
+# 구현한 기술
+### 게임 플레이
 - 이동
 - 1인칭/3인칭 전환
 - 마우스 화면 회전
   - 화면 스크롤 줌
 - 중력
 - 물체 오브젝트 충돌 감지 알고리즘 (AABB 알고리즘)
+- obj 로더
+- 청크 시스템
+- UI
+
+### 그래픽스
+- 그림자, 그림자 최적화
+- TBN 행렬을 이용한 normal mapping
+
 
 ---
 # 인 게임 플레이
@@ -135,4 +144,11 @@ bool isCollisionEnter(GameObject* object)
 }
 
 ```
+
+---
+# 그래픽스
+### 그림자 매핑
+<img width="639" height="436" alt="image" src="https://github.com/user-attachments/assets/6da02df1-a017-4cbf-bf63-510ce9a8504c" />
+
+### 
 
