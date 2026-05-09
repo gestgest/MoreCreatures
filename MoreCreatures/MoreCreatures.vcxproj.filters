@@ -58,6 +58,9 @@
     <Filter Include="소스 파일\cpp\Component">
       <UniqueIdentifier>{c1dae9f8-a0bf-4c23-0465-8b9cadbecfd0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Debug">
+      <UniqueIdentifier>{d2ebfa09-b1c0-4d34-1576-9cadbecfd0e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="src\header\Config.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="src\header\Debug\DebugTimer.h">
+      <Filter>헤더 파일\Debug</Filter>
     </ClInclude>
     <ClInclude Include="src\header\Loader\Loader.h">
       <Filter>헤더 파일\Loader</Filter>

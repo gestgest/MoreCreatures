@@ -82,7 +82,7 @@ private:
     std::vector<glm::ivec2> loadChunks(const std::vector<glm::ivec2>& desired,
         std::vector<class GameObject*>& objects);
 
-    //=== Step 2: 비동기 청크 로딩 ===
+    //=== Step 2: 비동기 청크 로딩 === 
     //워커 스레드에서 buildMeshData를 돌리는 동안 메인 스레드는 멈추지 않음.
     //ready된 결과만 메인에서 GL 업로드.
     struct PendingChunk

@@ -122,6 +122,14 @@ float Terrain::getHeightAt(float worldX, float worldZ) const
     return fbm(worldX * noiseScale, worldZ * noiseScale, seed, octaves) * heightScale;
 }
 
+//Terrain 인스턴스 의존 없는 높이 계산 — 노이즈 파라미터는 static const 값 사용.
+//(인스턴스 메서드 getHeightAt은 멤버 변수의 default 값을 쓰는데 그 default가 NOISE_SCALE 등과 동일 →
+// 두 함수 결과는 항상 같음. 비동기 로딩 중 chunks가 비어도 ChunkManager가 이 함수로 안전하게 답할 수 있음.)
+float Terrain::heightAt(float worldX, float worldZ)
+{
+    return fbm(worldX * NOISE_SCALE, worldZ * NOISE_SCALE, SEED, OCTAVES) * HEIGHT_SCALE;
+}
+
 
 void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
 {

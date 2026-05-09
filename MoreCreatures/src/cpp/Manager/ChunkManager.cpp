@@ -95,10 +95,10 @@ void ChunkManager::update(const glm::vec3& playerPos, std::vector<GameObject*>& 
     //→ 9개 동시 spike 대신 9프레임에 분산 → "응답없음" 사라짐
     loadedList = processPendingChunks(objects);
 
-    //4) 변동 있을 때만 출력
+    //4) 변동 있을 때만 출력, 근데 너무 많이 나온다.
     if (!unloadedList.empty() || !loadedList.empty())
     {
-        printChunkInfo(newCenter, unloadedList, loadedList);
+        //printChunkInfo(newCenter, unloadedList, loadedList);
     }
 }
 
@@ -221,8 +221,9 @@ void ChunkManager::printChunkInfo(glm::ivec2 newCenter, std::vector<glm::ivec2>&
 
 float ChunkManager::getHeightAt(float worldX, float worldZ) const
 {
-    if (chunks.empty()) return 0.0f;
-    return chunks[0]->getHeightAt(worldX, worldZ);
+    //chunks가 비어있어도(비동기 로딩 중) 안전 — 노이즈로 직접 계산, 인스턴스 의존 없음.
+    //(아몬드 스폰처럼 첫 update() 직후 chunks가 채워지기 전에 호출될 때 0 반환 버그 방지)
+    return Terrain::heightAt(worldX, worldZ);
 }
 
 //desired 할당하는 함수

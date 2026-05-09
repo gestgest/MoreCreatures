@@ -150,6 +150,51 @@ float UpdateDeltaTime()
     return deltaTime;
 }
 
+
+// 디버그: FPS + 최대 프레임 시간 측정
+//   - 1초마다 창 제목에 평균 FPS 표시
+//   - max frame time은 SPIKE 검출용 — 비동기 청크 로딩 효과 확인에 유용
+//   - 33ms 이상 spike 발생 시 콘솔에도 알림 (= 30FPS 이하로 잠깐 떨어진 순간)
+//
+//   static 지역 변수로 상태 보관 → 외부 의존성 없음.
+//   호출은 메인 루프에서 매 프레임 한 번 (UpdateDeltaTime 직후가 자연스러움).
+void UpdateFpsCounter(GLFWwindow* window, float deltaTime)
+{
+    static double lastReportTime = glfwGetTime();
+    static int   frameCount = 0;
+    static float maxFrameMs = 0.0f;
+
+    //매 프레임: max 갱신 (이번 1초 구간의 최악 프레임 시간 추적)
+    frameCount++;
+    float frameMs = deltaTime * 1000.0f;
+    if (frameMs > maxFrameMs) maxFrameMs = frameMs;
+
+    //1초마다: 창 제목 갱신 + 콘솔 spike 알림 + 리셋
+    double now = glfwGetTime();
+    double elapsed = now - lastReportTime;
+    if (elapsed >= 1.0)
+    {
+        float avgFps = frameCount / (float)elapsed;
+
+        char title[160];
+        snprintf(title, sizeof(title),
+                 "MoreCreatures - FPS: %.1f  | max frame: %.2f ms",
+                 avgFps, maxFrameMs);
+        glfwSetWindowTitle(window, title);
+
+        //30FPS 이하 spike 발생 시 콘솔에도 (응답없음 직전 상태 추적)
+        if (maxFrameMs > 33.3f)
+        {
+            std::cout << "[FPS spike] " << maxFrameMs << " ms (= "
+                      << (1000.0f / maxFrameMs) << " fps 로 잠깐 떨어짐)" << std::endl;
+        }
+
+        frameCount = 0;
+        maxFrameMs = 0.0f;
+        lastReportTime = now;
+    }
+}
+
 //ProcessInput 래퍼는 InputManager::processInput으로 통합되어 제거됨
 
 void UpdatePhysics(float dt)
@@ -224,7 +269,7 @@ void UpdateHunger(float dt)
         if (curFood > 0)
         {
             hud->setFood(curFood - 1);
-            std::cout << "[배고픔] 식량: " << hud->getFood() << "/" << hud->getMaxFood() << std::endl;
+            //std::cout << "[배고픔] 식량: " << hud->getFood() << "/" << hud->getMaxFood() << std::endl;
         }
     }
 
@@ -240,10 +285,10 @@ void UpdateHunger(float dt)
             if (curHp > 0)
             {
                 hud->setHp(curHp - 1);
-                std::cout << "[굶주림] HP: " << hud->getHp() << "/" << hud->getMaxHp() << std::endl;
+                //std::cout << "[굶주림] HP: " << hud->getHp() << "/" << hud->getMaxHp() << std::endl;
 
-                if (hud->getHp() == 0)
-                    std::cout << "[게임 오버] 굶어 죽었습니다..." << std::endl;
+                //if (hud->getHp() == 0)
+                    //std::cout << "[게임 오버] 굶어 죽었습니다..." << std::endl;
             }
             //이미 0이면 더 깎을 거 없음 — 메세지도 안 띄움 (게임 오버 한 번만 출력)
         }

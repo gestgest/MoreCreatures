@@ -66,6 +66,12 @@ public:
     //월드 (x,z)에서의 지형 높이 — 추후 충돌/물체 배치에 사용
     float getHeightAt(float worldX, float worldZ) const;
 
+    //=== 인스턴스 없이 호출 가능한 높이 계산 ===
+    //chunks 벡터가 비어있어도(비동기 로딩 중이라도) 안전하게 호출 가능.
+    //fbm 노이즈는 인스턴스랑 무관한 순수 함수 — 어떤 인스턴스에 물어도 같은 답이라
+    //처음부터 정적 함수가 맞는 설계.
+    static float heightAt(float worldX, float worldZ);
+
     //=== Step 1: CPU 데이터만 만드는 정적 함수 (GL 절대 안 건드림) ===
     //어떤 스레드에서든 호출 가능 — Step 2에서 워커 스레드용으로 사용 예정.
     //멤버 변수에 의존하지 않도록 모든 파라미터를 인자로 받음.

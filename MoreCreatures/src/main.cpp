@@ -20,6 +20,7 @@
 #include <Input/InputManager.h>
 
 #include <Loader/Loader.h>
+#include <Debug/DebugTimer.h>   //초기화 단계별 시간 측정 (평소 false, 진단 시 true)
 
 #include <iostream>
 #include <vector>
@@ -32,6 +33,7 @@
 // 입력 처리는 모두 InputManager로 분리됨 — 콜백 forward decl 불필요
 
 float UpdateDeltaTime();
+void UpdateFpsCounter(GLFWwindow* window, float deltaTime);   //디버그: FPS + spike 측정 (창 제목/콘솔)
 void UpdatePhysics(float dt);
 void UpdateHunger(float dt);
 void UpdatePickup(float dt);
@@ -82,6 +84,11 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
+    //=== 초기화 단계별 시간 측정 (디버그) ===
+    //평소엔 false → report() 출력 안 됨 (총 시간만 마지막에 출력).
+    //나중에 흰 화면 / 로딩 spike 등 의심되면 true로 한 글자만 바꿔서 빌드 → 단계별 시간 다 보임.
+    DebugTimer initTimer(false);
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -114,25 +121,38 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    initTimer.report("glfw + window + glad");
 
     glEnable(GL_DEPTH_TEST);
     Shader mouseShader("src/vs/mouse.vs", "src/fs/mouse.fs");
+    initTimer.report("mouseShader 컴파일");
+
     Shader groundShader("src/vs/ground.vs", "src/fs/ground.fs");
+    initTimer.report("groundShader 컴파일");
+
     depthShader = new Shader("src/vs/DepthShader.vs", "src/fs/DepthShader.fs");
+    initTimer.report("depthShader 컴파일");
 
     //오픈월드 청크 관리자 — 시작 시 3x3 청크 생성
     chunkManager = new ChunkManager(groundShader, glm::vec3(1.0f, 1.0f, 1.0f));
+    initTimer.report("ChunkManager 생성");
+
     Mouse* mouse = new Mouse(mouseShader, glm::vec3(0.5882353, 0.2941176, 0.0));
+    initTimer.report("Mouse 생성 (모델 로딩 포함?)");
 
     unsigned int ground_texture;
     unsigned int normalMap;
     player = mouse;
     Loader::loadTexture(ground_texture, "textures/snow.png");
+    initTimer.report("텍스처: snow.png 로드");
+
     Loader::loadTexture(normalMap, "textures/snow_normal.png");
+    initTimer.report("텍스처: snow_normal.png 로드");
 
 
     //shadow map
     depthProcessing(depthMapFBO, depthMap);
+    initTimer.report("depthProcessing (shadow FBO)");
 
     //텍스처/노멀/그림자맵 ID를 ChunkManager에 저장 (load되는 새 청크에 자동 적용)
     chunkManager->setTexture(ground_texture);
@@ -141,6 +161,7 @@ int main()
 
     //초기 청크 9개 생성 — update()가 첫 호출 때 자동으로 viewRadius 범위 채움
     chunkManager->update(mouse->getPosition(), objects);
+    initTimer.report("chunkManager->update (비동기 의뢰만)");
 
     objects.push_back(mouse);
 
@@ -151,6 +172,7 @@ int main()
     hud->init();
     hud->setFood(5);
     hud->setHp(5);
+    initTimer.report("HUD init");
 
     // === 아몬드 랜덤 스폰 ===
     // 청크 영역(3x3 = chunkSize*1.5)에 맞춰 스폰 범위 확장.
@@ -182,12 +204,21 @@ int main()
 
         std::cout << "Spawned " << numAlmonds << " almonds" << std::endl;
     }
+    initTimer.report("아몬드 스폰 (20개)");
+    std::cout << "[init] === 총 초기화 시간: " << initTimer.total()
+              << " ms === 게임 루프 진입" << std::endl;
+
+    //=== 게임 루프 진입 직전: deltaTime 측정 baseline 설정 ===
+    //안 하면 첫 프레임 deltaTime에 main 초기화 시간(셰이더 컴파일/텍스처 로딩 등)이 통째로 잡혀서
+    //가짜 spike로 보고됨. 진짜 멈춤이 아닌데 응답없음으로 착각하기 좋음.
+    lastFrame = (float)glfwGetTime();
 
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
         float dt = UpdateDeltaTime();
+        UpdateFpsCounter(window, dt);             //디버그: 창 제목에 FPS 표시 + spike 콘솔 로그
         InputManager::processInput(window, dt);   //WASD 폴링 + 카메라 추적
         UpdatePhysics(dt);
         UpdateHunger(dt);     //시간 경과로 식량 자동 감소
