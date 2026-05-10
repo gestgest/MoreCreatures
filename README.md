@@ -86,6 +86,12 @@ after<br><br>
 새로운 청크로 이동할 때마다 메인 스레드에서 방대한 지형 데이터를 생성하다 보니 순간적으로 게임이 멈추는 프레임 드랍(Spike)이 발생했습니다.
 ### 해결
 원활한 청크 생성을 위해 CPU 연산이 주를 이루는 작업(노이즈 계산, 정점 노멀/탄젠트 계산, 정점 데이터 패킹, 인덱스 버퍼 배열 생성)을 비동기 스레드로 분리(Multi-threading) 했습니다.
+<img width="816" height="360" alt="image" src="https://github.com/user-attachments/assets/194c9a5f-209b-47aa-8ca1-3554cd9c7442" /> <br>
+before <br><br>
+
+<img width="955" height="309" alt="image" src="https://github.com/user-attachments/assets/4a4c01cc-7981-4625-a94c-24876cb06653" /> <br>
+after<br>
+
 
 ---
 # 회고
