@@ -57,7 +57,6 @@ static float fbm(float x, float z, int seed, int octaves)
         total += valueNoise(x * freq, z * freq, seed + i) * amp; //대략 노이즈를 주고
         maxAmp += amp;
 
-
         amp *= 0.5f;
         freq *= 2.0f;
     }
@@ -157,9 +156,8 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
     ChunkMeshData md = buildMeshData(chunkCenter, gridSize, cellSize,
                                      heightScale, noiseScale, octaves, seed);
 
-    //=== GL 업로드 (메인 스레드 only) ===
+    //=== GL 업로드 (메인 스레드) ===
     //Mesh 생성과 setupIndexedTexcoords는 VAO/VBO/EBO 만들고 glBufferData 호출 — GL 컨텍스트 필수.
-    //그래서 비동기로 옮기면 안 됨. 워커가 만든 md만 받아서 여기서 업로드.
     if (shaderPtr)
     {
         Mesh* m = new Mesh(*shaderPtr, color);
@@ -176,13 +174,8 @@ void Terrain::initObject(Shader* shaderPtr, glm::vec3 color)
 // 어떤 스레드에서든 호출 가능 — GL 호출 절대 없음.
 // fbm/valueNoise/hash01은 순수 함수(전역 상태 없음)라 thread-safe.
 // Step 2에서 std::async로 이 함수를 워커 스레드에 넘길 예정.
-ChunkMeshData Terrain::buildMeshData(glm::vec2 chunkCenter,
-                                     int   gridSize,
-                                     float cellSize,
-                                     float heightScale,
-                                     float noiseScale,
-                                     int   octaves,
-                                     int   seed)
+ChunkMeshData Terrain::buildMeshData(glm::vec2 chunkCenter, int   gridSize, float cellSize, float heightScale,
+                                     float noiseScale, int octaves, int seed)
 {
     const int n = gridSize; //128 => 격자라고 한다면
     const int vertsPerSide = n + 1; // => 바둑알마냥 격자 꼭지점 4개 의미
