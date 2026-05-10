@@ -30,7 +30,7 @@ open world survival game with OpenGL
 - obj 로더
 - 지형
   - **FBM**
-  - **청크 시스템**
+  - **청크 시스템** (비동기 처리)
 
 ### 그래픽스
 - **그림자, FSM**
