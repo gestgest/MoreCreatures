@@ -87,10 +87,10 @@ after<br><br>
 ### 해결
 원활한 청크 생성을 위해 CPU 연산이 주를 이루는 작업(노이즈 계산, 정점 노멀/탄젠트 계산, 정점 데이터 패킹, 인덱스 버퍼 배열 생성)을 비동기 스레드로 분리(Multi-threading) 했습니다.
 <img width="816" height="360" alt="image" src="https://github.com/user-attachments/assets/194c9a5f-209b-47aa-8ca1-3554cd9c7442" /> <br>
-before <br><br>
+before : 720ms <br><br>
 
 <img width="955" height="309" alt="image" src="https://github.com/user-attachments/assets/4a4c01cc-7981-4625-a94c-24876cb06653" /> <br>
-after<br>
+after : 677ms<br>
 
 
 ---
