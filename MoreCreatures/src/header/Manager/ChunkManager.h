@@ -46,6 +46,10 @@ public:
     //   - 청크당 추정 메모리 + 총 메모리
     void printChunkMemory(const glm::vec3& playerPos) const;
 
+
+    void setAsyncMode(bool on) { useAsync = on; }
+    bool isAsyncMode() const { return useAsync; }
+
 private:
     Shader* shader = nullptr;       //새 청크 생성 시 재사용
     glm::vec3 color = glm::vec3(1.0f);
@@ -65,6 +69,8 @@ private:
 
     float chunkSize = 64.0f;   //Terrain의 gridSize*cellSize와 일치
     int   viewRadius = 1;      //±N 청크. 1이면 3x3 = 9개
+
+    bool  useAsync = true;     //false면 동기 로딩 
 
 
     //월드 좌표 → 청크 인덱스. 청크 중심 ±chunkSize/2 범위가 그 청크에 속함
@@ -93,10 +99,22 @@ private:
     std::vector<PendingChunk> pendingFutures;
 
     //최대 처리할 수 있는 청크 수 — spike 분산. 1이면 가장 부드러움, 늘리면 더 빨리 채워짐.
-    int maxUploadsPerFrame = 1; 
+    int maxUploadsPerFrame = 1;
+
+    //=== 동시 워커 수 제한 (CPU 경쟁 방지) ===
+    //9개를 한꺼번에 의뢰하면 워커 9 + 메인 + 렌더 = 11스레드가 코어 다툼
+    //→ 메인 스레드(AlmondPool 등)가 starve돼서 spike 발생
+    //1~2개로 제한하면 워커 끝날 때까지 약간 더 걸리지만 메인은 부드러움
+    int maxConcurrentWorkers = 2;
+
+    //아직 async 의뢰 안 한 청크 좌표들 — pendingFutures의 빈 슬롯을 기다리는 대기열
+    std::vector<glm::ivec2> waitingQueue;
 
     //새 청크 좌표들에 대해 std::async로 워커 의뢰 — pendingFutures에 추가
     void requestLoadChunks(const std::vector<glm::ivec2>& desired);
+
+    //빈 슬롯 있으면 waitingQueue에서 꺼내 async 의뢰 — 동시 워커 수를 maxConcurrentWorkers 이하로 유지
+    void dispatchPending();
 
     //pending 큐 폴링 — ready된 future들을 메인 스레드에서 GL 업로드 (프레임당 maxUploadsPerFrame 개)
     std::vector<glm::ivec2> processPendingChunks(std::vector<class GameObject*>& objects);

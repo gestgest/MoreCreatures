@@ -91,7 +91,7 @@ int main()
     //=== 초기화 단계별 시간 측정 (디버그) ===
     //평소엔 false → report() 출력 안 됨 (총 시간만 마지막에 출력).
     //나중에 흰 화면 / 로딩 spike 등 의심되면 true로 한 글자만 바꿔서 빌드 → 단계별 시간 다 보임.
-    DebugTimer initTimer(false);
+    DebugTimer initTimer(true);
 
     // glfw: initialize and configure
     // ------------------------------
@@ -165,7 +165,7 @@ int main()
 
     //초기 청크 9개 생성 — update()가 첫 호출 때 자동으로 viewRadius 범위 채움
     chunkManager->update(mouse->getPosition(), objects);
-    initTimer.report("chunkManager->update (비동기 의뢰만)");
+    initTimer.report("chunkManager->update");
 
     objects.push_back(mouse);
 

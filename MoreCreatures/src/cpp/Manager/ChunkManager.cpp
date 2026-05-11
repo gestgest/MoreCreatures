@@ -85,13 +85,28 @@ void ChunkManager::update(const glm::vec3& playerPos, std::vector<GameObject*>& 
         //2) 멀어진 청크 unload
         unloadedList = unloadFarChunks(desired, objects);
 
-        //3) 청크 로드 (비동기)
-        requestLoadChunks(desired);
+        //3) 청크 로드 — 모드별 분기 (성능 비교용)
+        if (useAsync)
+        {
+            //비동기: 워커한테 의뢰만. 이 프레임은 거의 안 멈춤.
+            requestLoadChunks(desired);
+        }
+        else
+        {
+            //동기: 9개 청크 buildMeshData + GL 업로드를 이 프레임에 다 함 → spike 발생
+            loadedList = loadChunks(desired, objects);
+        }
     }
 
     //=== 매 프레임: pendingFutures 큐 폴링 ===
-    //워커가 끝낸 청크가 있으면 메인 스레드에서 GL 업로드 (프레임당 maxUploadsPerFrame 개씩)
-    loadedList = processPendingChunks(objects);
+    if (useAsync)
+    {
+        auto polled = processPendingChunks(objects);
+        loadedList.insert(loadedList.end(), polled.begin(), polled.end());
+
+        //워커 슬롯 빈 만큼 대기열에서 다음 청크 의뢰 — 동시성 한도 유지 => 실제로 async 실행 함수
+        dispatchPending();
+    }
 
     //4) 변동 있을 때만 출력
     if (!unloadedList.empty() || !loadedList.empty())
@@ -102,8 +117,9 @@ void ChunkManager::update(const glm::vec3& playerPos, std::vector<GameObject*>& 
 
 
 //=== Step 2: 비동기 청크 로딩===
-//desired 안의 새 청크 좌표들에 대해 std::async로 워커 스레드에 buildMeshData 작업 위임.
-//바로 리턴 — 메인 프레임 안 멈춤.
+//desired 안의 새 청크 좌표들을 waitingQueue에 적립.
+//실제 async 의뢰는 dispatchPending이 동시성 한도(maxConcurrentWorkers)를 보면서 함.
+//→ 9개를 한 번에 의뢰하지 않아 메인/렌더 스레드가 starve되지 않음.
 void ChunkManager::requestLoadChunks(const std::vector<glm::ivec2>& desired)
 {
     for (const auto& d : desired)
@@ -118,10 +134,42 @@ void ChunkManager::requestLoadChunks(const std::vector<glm::ivec2>& desired)
             if (p.idx == d) //내 범위와 처리중인 pending이 같다면
             {
                 inPending = true;
-                break; 
+                break;
             }
         }
         if (inPending) continue;
+
+        //이미 대기열에 있는지 — 워커가 못 받아서 줄 서있는 청크
+        bool inWaiting = false;
+        for (const auto& w : waitingQueue)
+        {
+            if (w == d)
+            {
+                inWaiting = true;
+                break;
+            }
+        }
+        if (inWaiting) continue;
+
+        //새 요청은 일단 대기열로 — 즉시 의뢰 X
+        waitingQueue.push_back(d);
+    }
+
+    //빈 워커 슬롯 있으면 바로 채움
+    dispatchPending();
+}
+
+
+//=== 동시 워커 수 제한 하에서 대기열 → 워커 의뢰 ===
+//maxConcurrentWorkers를 넘기지 않는 선에서 가능한 만큼만 async 호출.
+//processPendingChunks 직후에도 호출됨 → 워커 끝난 자리에 다음 청크 자동 투입.
+void ChunkManager::dispatchPending()
+{
+    while (!waitingQueue.empty() &&
+           (int)pendingFutures.size() < maxConcurrentWorkers)
+    {
+        glm::ivec2 d = waitingQueue.front();
+        waitingQueue.erase(waitingQueue.begin());
 
         glm::vec2 worldCenter(d.x * chunkSize, d.y * chunkSize);
 
@@ -142,7 +190,7 @@ void ChunkManager::requestLoadChunks(const std::vector<glm::ivec2>& desired)
         );
 
         //std::future는 move-only — push_back에 std::move 필수 (안 그러면 컴파일 에러)
-        //그러니까 move로 옮기면 pc의 값은 없는 거 **처럼** 됨 : 
+        //그러니까 move로 옮기면 pc의 값은 없는 거 **처럼** 됨 :
         pendingFutures.push_back(std::move(pc));
     }
 }
